@@ -1,0 +1,34 @@
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">@color/catokan_teal</item>
+        <item name="android:windowBackground">@color/catokan_bg</item>
+        <item name="android:statusBarColor">@color/catokan_primary_dark</item>
+        <item name="android:navigationBarColor">@color/catokan_primary_dark</item>
+    </style>
+
+    <style name="CatokanTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/catokan_text</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="CatokanSubtitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/catokan_muted</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="CatokanLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/catokan_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
+</resources>

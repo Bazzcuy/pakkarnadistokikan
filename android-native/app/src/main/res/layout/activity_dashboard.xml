@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@drawable/bg_screen">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp" android:background="@drawable/bg_gradient_card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+                <ImageView android:layout_width="54dp" android:layout_height="54dp" android:src="@drawable/catokan_logo" />
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:paddingLeft="12dp">
+                    <TextView android:text="CATOKAN" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/white" android:textSize="24sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/txtGreeting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Halo, Admin" android:textColor="#DFF7FF" android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Kelola stok mentah, produksi, transaksi, dan laporan ikan giling dengan cepat." android:textColor="@color/white" android:textSize="14sp" android:layout_marginTop="12dp" />
+            <TextView android:id="@+id/txtRole" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Role: ADMIN" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" android:layout_marginTop="12dp" android:background="@drawable/bg_role_chip" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="14dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_stat_teal"><TextView android:text="Stok Mentah" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/catokan_muted" android:textSize="12sp" /><TextView android:id="@+id/txtStokMentah" android:text="0 kg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/catokan_text" android:textSize="20sp" android:textStyle="bold" /></LinearLayout>
+            <Space android:layout_width="10dp" android:layout_height="1dp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:padding="14dp" android:background="@drawable/bg_stat_blue"><TextView android:text="Stok Giling" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/catokan_muted" android:textSize="12sp" /><TextView android:id="@+id/txtStokGiling" android:text="0 kg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/catokan_text" android:textSize="20sp" android:textStyle="bold" /></LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp" android:layout_marginTop="10dp" android:background="@drawable/bg_stat_orange"><TextView android:text="Total Penjualan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/catokan_muted" android:textSize="12sp" /><TextView android:id="@+id/txtTotalJual" android:text="Rp 0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/catokan_text" android:textSize="20sp" android:textStyle="bold" /></LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp" android:layout_marginTop="14dp" android:background="@drawable/bg_card">
+            <TextView style="@style/CatokanTitle" android:text="Menu Utama" />
+            <TextView style="@style/CatokanSubtitle" android:text="Akses fitur sesuai role pengguna." android:layout_marginTop="4dp" />
+            <Button android:id="@+id/btnRawInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:background="@drawable/bg_menu_btn" android:gravity="center_vertical|left" android:padding="14dp" android:text="📥  Input Stok Ikan Mentah" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textStyle="bold" />
+            <Button android:id="@+id/btnProduction" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_menu_btn" android:gravity="center_vertical|left" android:padding="14dp" android:text="⚙️  Proses Produksi Giling" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textStyle="bold" />
+            <Button android:id="@+id/btnRawStock" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_menu_btn" android:gravity="center_vertical|left" android:padding="14dp" android:text="📦  Lihat Stok Mentah" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textStyle="bold" />
+            <Button android:id="@+id/btnGilingStock" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_menu_btn" android:gravity="center_vertical|left" android:padding="14dp" android:text="🐟  Lihat Stok Giling" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textStyle="bold" />
+            <Button android:id="@+id/btnSales" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_menu_btn" android:gravity="center_vertical|left" android:padding="14dp" android:text="🛒  Penjualan Cepat" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textStyle="bold" />
+            <Button android:id="@+id/btnReport" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_menu_btn" android:gravity="center_vertical|left" android:padding="14dp" android:text="📊  Laporan Ringkas" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textStyle="bold" />
+            <Button android:id="@+id/btnLogout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:background="@drawable/bg_secondary_btn" android:text="Logout" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="10dp" android:layout_marginTop="14dp" android:background="@drawable/bg_card">
+            <Button android:id="@+id/btnBottomHome" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:background="@drawable/bg_bottom_item" android:text="🏠
+Home" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textSize="12sp" />
+            <Space android:layout_width="8dp" android:layout_height="1dp" />
+            <Button android:id="@+id/btnBottomStock" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:background="@drawable/bg_bottom_item" android:text="🐟
+Stok" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textSize="12sp" />
+            <Space android:layout_width="8dp" android:layout_height="1dp" />
+            <Button android:id="@+id/btnBottomReport" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:background="@drawable/bg_bottom_item" android:text="📊
+Laporan" android:textAllCaps="false" android:textColor="@color/catokan_text" android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

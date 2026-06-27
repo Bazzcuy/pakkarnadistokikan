@@ -1,0 +1,12 @@
+<resources>
+    <color name="catokan_bg">#F3F8FC</color>
+    <color name="catokan_bg_soft">#EAF7FD</color>
+    <color name="catokan_primary">#0A84C1</color>
+    <color name="catokan_primary_dark">#076B9D</color>
+    <color name="catokan_teal">#19C0C7</color>
+    <color name="catokan_orange">#FF7A59</color>
+    <color name="catokan_text">#103B52</color>
+    <color name="catokan_muted">#5F7D90</color>
+    <color name="catokan_border">#D8E7F0</color>
+    <color name="white">#FFFFFF</color>
+</resources>

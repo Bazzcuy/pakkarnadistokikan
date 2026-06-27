@@ -1,0 +1,18 @@
+# Java/Maven
+target/
+*.class
+*.db
+.tools/
+
+# Android
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
