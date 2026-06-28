@@ -27,6 +27,8 @@ public class MainApp extends Application {
     private final ExcelService excelService = new ExcelService();
     private User currentUser;
     private BorderPane root;
+    private VBox menu;
+    private String workspaceMode;
 
     public static void main(String[] args) {
         launch(args);
@@ -69,6 +71,9 @@ public class MainApp extends Application {
         Label loginTitle = new Label("Masuk ke Dashboard"); loginTitle.getStyleClass().add("panel-title");
         Label info = new Label("Akun demo: admin/admin123 - kasir/kasir123 - operator/operator123");
         info.getStyleClass().add("brand-sub");
+        TextArea accounts = area("DAFTAR AKUN DEMO\n\nAdmin      : admin / admin123\nKasir      : kasir / kasir123\nProduksi   : operator / operator123");
+        accounts.setPrefRowCount(5);
+        accounts.setWrapText(false);
         TextField username = new TextField("admin");
         username.setPromptText("Username");
         PasswordField password = new PasswordField();
@@ -84,7 +89,13 @@ public class MainApp extends Application {
                 stage.setScene(appScene(stage));
             }
         });
-        loginCard.getChildren().addAll(loginTitle, info, new Label("Username"), username, new Label("Password"), password, login);
+        HBox quick = new HBox(8);
+        Button admin = quickLogin("Admin", username, password, "admin", "admin123");
+        Button kasir = quickLogin("Kasir", username, password, "kasir", "kasir123");
+        Button operator = quickLogin("Produksi", username, password, "operator", "operator123");
+        quick.getChildren().addAll(admin, kasir, operator);
+
+        loginCard.getChildren().addAll(loginTitle, info, accounts, new Label("Username"), username, new Label("Password"), password, quick, login);
 
         outer.getChildren().addAll(banner, brand, loginCard);
         Scene scene = new Scene(outer, 860, 760);
@@ -96,7 +107,8 @@ public class MainApp extends Application {
         root = new BorderPane();
         root.setPadding(new Insets(14));
 
-        VBox menu = new VBox(10);
+        if (workspaceMode == null || !workspaceAllowed(workspaceMode)) workspaceMode = defaultWorkspace();
+        menu = new VBox(10);
         menu.setPadding(new Insets(14));
         menu.setPrefWidth(260);
         menu.getStyleClass().add("card");
@@ -112,7 +124,18 @@ public class MainApp extends Application {
         userWrap.getChildren().addAll(brandLabel, user);
         brand.getChildren().addAll(logo, userWrap);
 
-        Button dashboard = nav("Dashboard", () -> setCenter(textPane(reportService.dashboard())));
+        Label workspace = new Label("Ruang kerja");
+        workspace.getStyleClass().add("brand-sub");
+        HBox switcher = new HBox(8);
+        Button adminSpace = nav("Admin", () -> setWorkspace(stage, "ADMIN"));
+        Button produksiSpace = nav("Produksi", () -> setWorkspace(stage, "PRODUKSI"));
+        Button kasirSpace = nav("Kasir", () -> setWorkspace(stage, "KASIR"));
+        adminSpace.setDisable(!canAccess("ADMIN"));
+        produksiSpace.setDisable(!canAccess("ADMIN", "OPERATOR"));
+        kasirSpace.setDisable(!canAccess("ADMIN", "KASIR"));
+        switcher.getChildren().addAll(adminSpace, produksiSpace, kasirSpace);
+
+        Button dashboard = nav("Dashboard", () -> setCenter(dashboardHome()));
         Button stokMentah = nav("Stok Mentah", () -> setCenter(stokMentahView()));
         Button produksi = nav("Produksi Giling", () -> setCenter(produksiView()));
         Button stokGiling = nav("Stok Giling", () -> setCenter(textPane(stockService.stokGilingText())));
@@ -126,9 +149,10 @@ public class MainApp extends Application {
         penjualan.setDisable(!canAccess("ADMIN", "KASIR"));
         pembayaran.setDisable(!canAccess("ADMIN", "KASIR"));
 
-        menu.getChildren().addAll(brand, dashboard, stokMentah, produksi, stokGiling, penjualan, pembayaran, laporan, logout);
+        menu.getChildren().addAll(brand, workspace, switcher, dashboard, stokMentah, produksi, stokGiling, penjualan, pembayaran, laporan, logout);
         root.setLeft(menu);
-        root.setCenter(textPane(reportService.dashboard()));
+        applyWorkspaceVisibility(stokMentah, produksi, stokGiling, penjualan, pembayaran, laporan);
+        root.setCenter(dashboardHome());
         Scene scene = new Scene(root, 1180, 760);
         scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
         return scene;
@@ -140,6 +164,59 @@ public class MainApp extends Application {
         b.setMaxWidth(Double.MAX_VALUE);
         b.setOnAction(e -> action.run());
         return b;
+    }
+
+    private Button quickLogin(String label, TextField username, PasswordField password, String u, String p) {
+        Button b = new Button(label);
+        b.getStyleClass().add("secondary-btn");
+        b.setOnAction(e -> {
+            username.setText(u);
+            password.setText(p);
+        });
+        return b;
+    }
+
+    private String defaultWorkspace() {
+        if (canAccess("KASIR") && !canAccess("ADMIN")) return "KASIR";
+        if (canAccess("OPERATOR") && !canAccess("ADMIN")) return "PRODUKSI";
+        return "ADMIN";
+    }
+
+    private boolean workspaceAllowed(String mode) {
+        if ("ADMIN".equals(mode)) return canAccess("ADMIN");
+        if ("PRODUKSI".equals(mode)) return canAccess("ADMIN", "OPERATOR");
+        if ("KASIR".equals(mode)) return canAccess("ADMIN", "KASIR");
+        return false;
+    }
+
+    private void setWorkspace(Stage stage, String mode) {
+        workspaceMode = mode;
+        stage.setScene(appScene(stage));
+    }
+
+    private void applyWorkspaceVisibility(Button stokMentah, Button produksi, Button stokGiling, Button penjualan, Button pembayaran, Button laporan) {
+        stokMentah.setVisible("ADMIN".equals(workspaceMode) || "PRODUKSI".equals(workspaceMode));
+        stokMentah.setManaged(stokMentah.isVisible());
+        produksi.setVisible("ADMIN".equals(workspaceMode) || "PRODUKSI".equals(workspaceMode));
+        produksi.setManaged(produksi.isVisible());
+        stokGiling.setVisible(true);
+        stokGiling.setManaged(true);
+        penjualan.setVisible("ADMIN".equals(workspaceMode) || "KASIR".equals(workspaceMode));
+        penjualan.setManaged(penjualan.isVisible());
+        pembayaran.setVisible("ADMIN".equals(workspaceMode) || "KASIR".equals(workspaceMode));
+        pembayaran.setManaged(pembayaran.isVisible());
+        laporan.setVisible("ADMIN".equals(workspaceMode) || "KASIR".equals(workspaceMode));
+        laporan.setManaged(laporan.isVisible());
+    }
+
+    private VBox dashboardHome() {
+        String label = switch (workspaceMode) {
+            case "PRODUKSI" -> "Dashboard Produksi";
+            case "KASIR" -> "Dashboard Kasir";
+            default -> "Dashboard Admin";
+        };
+        String text = label + "\n" + "=".repeat(label.length()) + "\n\n" + reportService.dashboard();
+        return textPane(text);
     }
 
     private boolean canAccess(String... roles) {

@@ -31,6 +31,10 @@ Supplier:
 - Jakabaring Fresh Fish
 - Agen Ikan Kertapati
 - CV Lautan Rasa
+- UD Segar Laut Musi
+- Depot Ikan Gandus
+- Mitra Nelayan Banyuasin
+- Pasar Induk Jakabaring
 
 Pelanggan:
 - Bu Sari Pempek
@@ -41,6 +45,10 @@ Pelanggan:
 - Pempek Cek Lina
 - Kantin Kampus Sriwijaya
 - Frozen Food Bukit
+- Pempek Pak Jaya
+- Dapur Harian Mama Rina
+- Kedai Tekwan 24
+- Agen Frozen Kertapati
 
 ## Stok Mentah Awal
 
@@ -67,6 +75,10 @@ Stok dibuat bervariasi agar lebih realistis:
 | BG-DEMO-004 | Patin | 18.0 kg | Rp 56.000/kg |
 | BG-DEMO-005 | Belida | 8.0 kg | Rp 110.000/kg |
 | BG-DEMO-006 | Tenggiri | 22.0 kg | Rp 98.000/kg |
+| BG-DEMO-007 | Nila | 14.0 kg | Rp 52.000/kg |
+| BG-DEMO-008 | Tongkol | 16.0 kg | Rp 60.000/kg |
+| BG-DEMO-009 | Lele | 13.0 kg | Rp 42.000/kg |
+| BG-DEMO-010 | Kakap | 9.0 kg | Rp 74.000/kg |
 
 ## Simulasi Transaksi
 
@@ -78,3 +90,4 @@ Contoh transaksi:
 - TRX-DEMO-003: Rumah Makan Musi Jaya membeli patin dan lunas.
 - TRX-DEMO-004: Pempek Cek Lina membeli tenggiri dan lunas.
 - TRX-DEMO-005: Frozen Food Bukit membeli belida dengan status tempo/belum lunas.
+- TRX-DEMO-006 sampai TRX-DEMO-012: transaksi tambahan untuk simulasi dashboard kasir, laporan, dan pembayaran tempo.

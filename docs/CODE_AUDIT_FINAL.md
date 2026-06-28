@@ -37,6 +37,7 @@ Alur utama sudah dijaga:
 - Penjualan ditolak jika stok giling tidak cukup.
 - Pembayaran tidak boleh negatif dan tidak boleh melebihi total/sisa tagihan.
 - Role membatasi akses fitur: admin semua menu, operator stok/produksi, kasir penjualan/pembayaran.
+- Setelah login, dashboard dipisah menjadi ruang kerja Admin, Produksi, dan Kasir agar aktivitas tidak bercampur.
 
 ## Database
 
@@ -66,10 +67,10 @@ Password demo tetap mudah dipakai untuk presentasi, tetapi database baru menyimp
 Data dummy sudah diperbanyak:
 
 - 8 jenis ikan.
-- 6 supplier.
-- 8 pelanggan.
+- 10 supplier.
+- 12 pelanggan.
 - Stok mentah bervariasi.
-- 6 batch ikan giling.
+- 10 batch ikan giling.
 - Data stok masuk, produksi, penjualan, pembayaran lunas, pembayaran tempo, dan riwayat stok.
 
 Detail ada di `docs/DATA_DUMMY.md`.

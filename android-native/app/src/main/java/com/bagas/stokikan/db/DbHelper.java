@@ -16,7 +16,7 @@ import java.util.List;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "stok_ikan_giling_android.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     public DbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -90,7 +90,11 @@ public class DbHelper extends SQLiteOpenHelper {
                 {"Nelayan Sungai Musi", "081271001003", "Seberang Ulu, Palembang", "Pasokan ikan sungai"},
                 {"Jakabaring Fresh Fish", "081271001004", "Jakabaring, Palembang", "Pasokan partai besar"},
                 {"Agen Ikan Kertapati", "081271001005", "Kertapati, Palembang", "Supplier cadangan"},
-                {"CV Lautan Rasa", "081271001006", "Plaju, Palembang", "Pasokan kakap dan patin"}
+                {"CV Lautan Rasa", "081271001006", "Plaju, Palembang", "Pasokan kakap dan patin"},
+                {"UD Segar Laut Musi", "081271001007", "Sako, Palembang", "Pasokan tongkol dan nila"},
+                {"Depot Ikan Gandus", "081271001008", "Gandus, Palembang", "Supplier ikan sungai"},
+                {"Mitra Nelayan Banyuasin", "081271001009", "Banyuasin", "Pasokan luar kota"},
+                {"Pasar Induk Jakabaring", "081271001010", "Jakabaring, Palembang", "Supplier grosir"}
         };
         for (String[] s : suppliers) {
             ContentValues cv = new ContentValues();
@@ -109,7 +113,11 @@ public class DbHelper extends SQLiteOpenHelper {
                 {"Pelanggan Umum", "082171002005", "Palembang", "Retail"},
                 {"Pempek Cek Lina", "082171002006", "Kemuning, Palembang", "Grosir"},
                 {"Kantin Kampus Sriwijaya", "082171002007", "Indralaya", "Retail"},
-                {"Frozen Food Bukit", "082171002008", "Bukit Besar, Palembang", "Grosir"}
+                {"Frozen Food Bukit", "082171002008", "Bukit Besar, Palembang", "Grosir"},
+                {"Pempek Pak Jaya", "082171002009", "Sako, Palembang", "Grosir"},
+                {"Dapur Harian Mama Rina", "082171002010", "Plaju, Palembang", "Retail"},
+                {"Kedai Tekwan 24", "082171002011", "Alang-Alang Lebar, Palembang", "Retail"},
+                {"Agen Frozen Kertapati", "082171002012", "Kertapati, Palembang", "Grosir"}
         };
         for (String[] s : pelanggan) {
             ContentValues cv = new ContentValues();
@@ -142,11 +150,19 @@ public class DbHelper extends SQLiteOpenHelper {
         seedGiling(db, 4, "BG-DEMO-004", 18.0, 56000.0, "2026-06-22");
         seedGiling(db, 6, "BG-DEMO-005", 8.0, 110000.0, "2026-06-23");
         seedGiling(db, 1, "BG-DEMO-006", 22.0, 98000.0, "2026-06-24");
+        seedGiling(db, 7, "BG-DEMO-007", 14.0, 52000.0, "2026-06-25");
+        seedGiling(db, 8, "BG-DEMO-008", 16.0, 60000.0, "2026-06-25");
+        seedGiling(db, 5, "BG-DEMO-009", 13.0, 42000.0, "2026-06-26");
+        seedGiling(db, 3, "BG-DEMO-010", 9.0, 74000.0, "2026-06-26");
 
         seedStockIn(db, "2026-06-18", 1, 1, 45.0, 62000.0, "Pasokan awal tenggiri");
         seedStockIn(db, "2026-06-19", 2, 3, 30.0, 48000.0, "Gabus segar dari Musi");
         seedStockIn(db, "2026-06-21", 4, 4, 55.0, 35000.0, "Patin untuk stok mingguan");
         seedStockIn(db, "2026-06-22", 6, 6, 20.0, 76000.0, "Belida kualitas premium");
+        seedStockIn(db, "2026-06-23", 7, 7, 40.0, 28000.0, "Nila untuk produksi ekonomis");
+        seedStockIn(db, "2026-06-24", 8, 9, 38.0, 33000.0, "Tongkol luar kota");
+        seedStockIn(db, "2026-06-25", 5, 10, 34.0, 24000.0, "Lele partai kecil");
+        seedStockIn(db, "2026-06-26", 3, 6, 24.0, 45000.0, "Kakap tambahan");
 
         seedProduction(db, "BG-DEMO-001", "2026-06-20", 1, 15.0, 12.5, 85000.0, 95000.0, "Produksi demo tenggiri");
         seedProduction(db, "BG-DEMO-002", "2026-06-20", 2, 12.0, 10.0, 65000.0, 80000.0, "Produksi demo gabus");
@@ -154,12 +170,23 @@ public class DbHelper extends SQLiteOpenHelper {
         seedProduction(db, "BG-DEMO-004", "2026-06-22", 4, 22.0, 18.0, 70000.0, 56000.0, "Produksi demo patin");
         seedProduction(db, "BG-DEMO-005", "2026-06-23", 6, 10.0, 8.0, 90000.0, 110000.0, "Produksi demo belida");
         seedProduction(db, "BG-DEMO-006", "2026-06-24", 1, 26.0, 22.0, 120000.0, 98000.0, "Produksi tenggiri batch besar");
+        seedProduction(db, "BG-DEMO-007", "2026-06-25", 7, 17.0, 14.0, 60000.0, 52000.0, "Produksi nila ekonomis");
+        seedProduction(db, "BG-DEMO-008", "2026-06-25", 8, 20.0, 16.0, 65000.0, 60000.0, "Produksi tongkol");
+        seedProduction(db, "BG-DEMO-009", "2026-06-26", 5, 16.0, 13.0, 50000.0, 42000.0, "Produksi lele");
+        seedProduction(db, "BG-DEMO-010", "2026-06-26", 3, 11.0, 9.0, 52000.0, 74000.0, "Produksi kakap tambahan");
 
         seedSale(db, "TRX-DEMO-001", "2026-06-24", 1, 2, 1, 2.0, 190000.0, "Tunai");
         seedSale(db, "TRX-DEMO-002", "2026-06-24", 2, 2, 3, 4.5, 200000.0, "Transfer");
         seedSale(db, "TRX-DEMO-003", "2026-06-25", 4, 2, 4, 6.0, 336000.0, "Tunai");
         seedSale(db, "TRX-DEMO-004", "2026-06-25", 6, 2, 6, 7.0, 686000.0, "Transfer");
         seedSale(db, "TRX-DEMO-005", "2026-06-26", 8, 2, 5, 1.5, 0.0, "Tempo");
+        seedSale(db, "TRX-DEMO-006", "2026-06-26", 9, 2, 2, 3.0, 240000.0, "Tunai");
+        seedSale(db, "TRX-DEMO-007", "2026-06-26", 10, 2, 7, 4.0, 208000.0, "Transfer");
+        seedSale(db, "TRX-DEMO-008", "2026-06-27", 11, 2, 8, 5.0, 300000.0, "Tunai");
+        seedSale(db, "TRX-DEMO-009", "2026-06-27", 12, 2, 9, 2.5, 50000.0, "Tempo");
+        seedSale(db, "TRX-DEMO-010", "2026-06-27", 3, 2, 10, 2.0, 148000.0, "Transfer");
+        seedSale(db, "TRX-DEMO-011", "2026-06-28", 5, 2, 1, 4.0, 380000.0, "Tunai");
+        seedSale(db, "TRX-DEMO-012", "2026-06-28", 7, 2, 6, 3.0, 200000.0, "Transfer");
     }
 
     private void seedGiling(SQLiteDatabase db, int jenisId, String batch, double kg, double harga, String tanggal) {

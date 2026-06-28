@@ -70,6 +70,7 @@ Aplikasi Android dan Desktop sengaja dibuat **tidak saling terhubung**, sesuai r
 
 ## Finalisasi Sistem
 - Data dummy diperbanyak agar terlihat seperti simulasi usaha kecil yang berjalan.
+- Setelah login, dashboard dipisah menjadi ruang kerja Admin, Produksi, dan Kasir agar aktivitas tidak bercampur.
 - Password demo disimpan dalam bentuk hash SHA-256 pada database baru.
 - Logika stok, produksi, penjualan, pembayaran, dan riwayat stok dibuat transactional.
 - Android siap dipush ke GitHub dan menghasilkan APK debug lewat workflow Actions.
