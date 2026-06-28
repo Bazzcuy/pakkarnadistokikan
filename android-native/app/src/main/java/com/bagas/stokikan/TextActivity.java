@@ -121,17 +121,18 @@ public class TextActivity extends Activity {
     private void renderReport() {
         double mentah = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah");
         double giling = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling");
-        double jual = db.scalar("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE 1=1 " + periodSql("tanggal"));
-        double piutang = db.scalar("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS' " + periodSql("p.tanggal"));
+        String salesWhere = salesFilterSql();
+        double jual = db.scalar("SELECT IFNULL(SUM(p.total),0) FROM penjualan p WHERE 1=1 " + salesWhere);
+        double piutang = db.scalar("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS' " + salesWhere);
         summary("Stok Mentah", kg(mentah), "Stok Giling", kg(giling));
         summary("Penjualan", "Rp " + money(jual), "Belum Lunas", "Rp " + money(piutang));
         section("Transaksi Penjualan");
-        String sales = "SELECT p.nomor_transaksi,p.tanggal,IFNULL(pl.nama,'Pelanggan Umum') pelanggan,p.total,p.status_pembayaran FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE 1=1 " + periodSql("p.tanggal") + " ORDER BY p.tanggal DESC,p.id DESC LIMIT 25";
+        String sales = "SELECT p.nomor_transaksi,p.tanggal,IFNULL(pl.nama,'Pelanggan Umum') pelanggan,j.nama jenis_ikan,d.jumlah_kg,p.total,p.status_pembayaran FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id JOIN jenis_ikan j ON j.id=d.jenis_ikan_id LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE 1=1 " + salesWhere + " ORDER BY p.tanggal DESC,p.id DESC LIMIT 25";
         try (Cursor c = db.rawQuery(sales)) {
             while (c.moveToNext()) {
                 LinearLayout row = miniCard();
                 row.addView(text(c.getString(0) + " | " + c.getString(1), 16, 0xff103b52, true));
-                row.addView(text(c.getString(2) + " | Rp " + money(c.getDouble(3)) + " | " + c.getString(4), 13, 0xff5f7d90, false));
+                row.addView(text(c.getString(2) + " | " + c.getString(3) + " " + kg(c.getDouble(4)) + " | Rp " + money(c.getDouble(5)) + " | " + c.getString(6), 13, 0xff5f7d90, false));
                 content.addView(row);
             }
         }
@@ -141,13 +142,13 @@ public class TextActivity extends Activity {
     private void historyBlock(String title, String jenisStok) {
         section(title);
         String stok = jenisStok == null ? "" : " AND r.jenis_stok='" + jenisStok + "' ";
-        String sql = "SELECT r.tanggal,r.jenis_transaksi,r.jenis_stok,r.referensi,r.perubahan_kg,r.stok_sebelum,r.stok_sesudah,r.keterangan FROM riwayat_stok r WHERE 1=1 " + stok + periodSql("r.tanggal") + " ORDER BY r.tanggal DESC,r.id DESC LIMIT 30";
+        String sql = "SELECT r.tanggal,IFNULL(j.nama,'-') jenis_ikan,r.jenis_transaksi,r.jenis_stok,r.referensi,r.perubahan_kg,r.stok_sebelum,r.stok_sesudah,r.keterangan FROM riwayat_stok r LEFT JOIN jenis_ikan j ON j.id=r.jenis_ikan_id WHERE 1=1 " + stok + jenisHistorySql() + periodSql("r.tanggal") + " ORDER BY r.tanggal DESC,r.id DESC LIMIT 30";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
                 LinearLayout row = miniCard();
-                row.addView(text(c.getString(0) + " | " + c.getString(1) + " | " + c.getString(2), 15, 0xff103b52, true));
-                row.addView(text("Ref: " + c.getString(3) + " | " + kg(c.getDouble(4)) + " | " + kg(c.getDouble(5)) + " -> " + kg(c.getDouble(6)), 13, 0xff076b9d, true));
-                row.addView(text(c.getString(7), 13, 0xff5f7d90, false));
+                row.addView(text(c.getString(0) + " | " + c.getString(1) + " | " + c.getString(2) + " | " + c.getString(3), 15, 0xff103b52, true));
+                row.addView(text("Ref: " + c.getString(4) + " | " + kg(c.getDouble(5)) + " | " + kg(c.getDouble(6)) + " -> " + kg(c.getDouble(7)), 13, 0xff076b9d, true));
+                row.addView(text(c.getString(8), 13, 0xff5f7d90, false));
                 content.addView(row);
             }
         }
@@ -232,6 +233,21 @@ public class TextActivity extends Activity {
         if ("Minggu Ini".equals(p)) return " AND strftime('%Y-%W'," + column + ")=strftime('%Y-%W','now','localtime') ";
         if ("Bulan Ini".equals(p)) return " AND strftime('%Y-%m'," + column + ")=strftime('%Y-%m','now','localtime') ";
         return "";
+    }
+
+    private String salesFilterSql() {
+        String sql = periodSql("p.tanggal");
+        if (jenis == null || jenis.getSelectedItem() == null) return sql;
+        String value = jenis.getSelectedItem().toString();
+        if ("Semua Ikan".equals(value)) return sql;
+        return sql + " AND EXISTS (SELECT 1 FROM detail_penjualan dx JOIN jenis_ikan jx ON jx.id=dx.jenis_ikan_id WHERE dx.penjualan_id=p.id AND jx.nama='" + value.replace("'", "''") + "') ";
+    }
+
+    private String jenisHistorySql() {
+        if (jenis == null || jenis.getSelectedItem() == null) return "";
+        String value = jenis.getSelectedItem().toString();
+        if ("Semua Ikan".equals(value)) return "";
+        return " AND r.jenis_ikan_id=(SELECT id FROM jenis_ikan WHERE nama='" + value.replace("'", "''") + "' LIMIT 1) ";
     }
 
     private String subtitle() {

@@ -35,7 +35,7 @@ public class StockService {
             stok.put("updated_at", DateUtil.now());
             db.update("stok_mentah", stok, "jenis_ikan_id=?", new String[]{String.valueOf(jenisIkanId)});
 
-            riwayat(db, "STOK_MASUK", "MENTAH", "stok_masuk", beratKg, before, after, catatan);
+            riwayat(db, jenisIkanId, "STOK_MASUK", "MENTAH", "stok_masuk", beratKg, before, after, catatan);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -80,8 +80,8 @@ public class StockService {
             giling.put("status_stok", "TERSEDIA");
             db.insert("stok_giling", null, giling);
 
-            riwayat(db, "PRODUKSI_KURANG_MENTAH", "MENTAH", batch, -mentah, before, after, "Bahan produksi");
-            riwayat(db, "PRODUKSI_TAMBAH_GILING", "GILING", batch, hasil, 0, hasil, "Hasil produksi giling");
+            riwayat(db, jenisIkanId, "PRODUKSI_KURANG_MENTAH", "MENTAH", batch, -mentah, before, after, "Bahan produksi");
+            riwayat(db, jenisIkanId, "PRODUKSI_TAMBAH_GILING", "GILING", batch, hasil, 0, hasil, "Hasil produksi giling");
             db.setTransactionSuccessful();
             return batch;
         } finally {
@@ -140,7 +140,7 @@ public class StockService {
             upd.put("total_kg", after);
             upd.put("status_stok", after <= 0 ? "HABIS" : "TERSEDIA");
             db.update("stok_giling", upd, "id=?", new String[]{String.valueOf(stokGilingId)});
-            riwayat(db, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan ikan giling");
+            riwayat(db, jenisId, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan ikan giling");
             db.setTransactionSuccessful();
             return nomor + " | Total Rp " + total + " | " + status;
         } finally {
@@ -148,9 +148,10 @@ public class StockService {
         }
     }
 
-    private void riwayat(SQLiteDatabase db, String transaksi, String jenisStok, String ref, double perubahan, double before, double after, String ket) {
+    private void riwayat(SQLiteDatabase db, int jenisIkanId, String transaksi, String jenisStok, String ref, double perubahan, double before, double after, String ket) {
         ContentValues r = new ContentValues();
         r.put("tanggal", DateUtil.now());
+        r.put("jenis_ikan_id", jenisIkanId);
         r.put("jenis_transaksi", transaksi);
         r.put("jenis_stok", jenisStok);
         r.put("referensi", ref);

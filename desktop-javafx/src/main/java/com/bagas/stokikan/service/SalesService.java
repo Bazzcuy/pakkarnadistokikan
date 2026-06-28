@@ -27,7 +27,7 @@ public class SalesService {
                 Database.insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", idPenjualan, DateUtil.today(), metode, jumlahBayar, sisa, status, "Pembayaran saat transaksi");
                 double stokSesudah = stok - jumlahKg;
                 Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", stokSesudah, stokSesudah <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
-                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?)", DateUtil.now(), "PENJUALAN", "GILING", nomor, -jumlahKg, stok, stokSesudah, "Penjualan ikan giling");
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), (int) jenis, "PENJUALAN", "GILING", nomor, -jumlahKg, stok, stokSesudah, "Penjualan ikan giling");
                 c.commit();
                 return nomor + " | Total: Rp " + total + " | Status: " + status;
             } catch (Exception e) {

@@ -286,6 +286,7 @@ public class MainApp extends Application {
     private VBox reportView(Stage stage) {
         ComboBox<String> periode = new ComboBox<>(FXCollections.observableArrayList("Semua", "Hari Ini", "Minggu Ini", "Bulan Ini"));
         periode.getSelectionModel().selectFirst();
+        ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
         Button export = primary("Export Laporan Excel");
         export.setOnAction(e -> {
             File file = saveExcel(stage, "laporan-catokan.xlsx");
@@ -312,27 +313,36 @@ public class MainApp extends Application {
             alert("Berhasil", rows + " baris stok masuk diimport.");
             setCenter(reportView(stage));
         });
-        VBox box = page("Laporan Ringkas", sub("Laporan bisa dilihat semua, harian, mingguan, atau bulanan."), new HBox(10, new Label("Periode"), periode, export, template, importExcel));
+        VBox box = page("Laporan Ringkas", sub("Laporan bisa dilihat semua, harian, mingguan, bulanan, dan per jenis ikan."), new HBox(10, new Label("Periode"), periode, new Label("Jenis"), jenis, export, template, importExcel));
         Runnable refresh = () -> {
             box.getChildren().removeIf(n -> n instanceof TableView || (n instanceof HBox h && h.getStyleClass().contains("stats-row")));
+            String salesWhere = salesFilterSql(periode.getValue(), jenis.getValue());
             HBox stats = new HBox(12,
-                    stat("Penjualan", "Rp " + scalar(periodSql("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE 1=1", "tanggal", periode.getValue()))),
+                    stat("Penjualan", "Rp " + scalar("SELECT IFNULL(SUM(p.total),0) FROM penjualan p WHERE 1=1 " + salesWhere)),
                     stat("Stok Mentah", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg"),
                     stat("Stok Giling", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg"));
             stats.getStyleClass().add("stats-row");
             box.getChildren().add(2, stats);
-            box.getChildren().add(table(Database.query(periodSql("SELECT nomor_transaksi,tanggal,total,status_pembayaran FROM penjualan WHERE 1=1", "tanggal", periode.getValue()) + " ORDER BY tanggal DESC")));
+            box.getChildren().add(table(Database.query("SELECT p.nomor_transaksi,p.tanggal,j.nama AS jenis_ikan,d.jumlah_kg,p.total,p.status_pembayaran FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id JOIN jenis_ikan j ON j.id=d.jenis_ikan_id WHERE 1=1 " + salesWhere + " ORDER BY p.tanggal DESC,p.id DESC")));
         };
         periode.setOnAction(e -> refresh.run());
+        jenis.setOnAction(e -> refresh.run());
         refresh.run();
         return box;
     }
 
     private List<Map<String, Object>> historyRows(String period, OptionItem jenis) {
-        String sql = "SELECT tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan FROM riwayat_stok WHERE 1=1";
-        sql = periodSql(sql, "tanggal", period);
-        if (jenis != null) sql += " AND (keterangan LIKE '%" + jenis.getLabel().replace("'", "''") + "%' OR referensi IS NOT NULL)";
+        String sql = "SELECT r.tanggal,j.nama AS jenis_ikan,r.jenis_transaksi,r.jenis_stok,r.referensi,r.perubahan_kg,r.stok_sebelum,r.stok_sesudah,r.keterangan FROM riwayat_stok r LEFT JOIN jenis_ikan j ON j.id=r.jenis_ikan_id WHERE 1=1";
+        sql = periodSql(sql, "r.tanggal", period);
+        if (jenis != null) sql += " AND r.jenis_ikan_id=" + jenis.getId();
         return Database.query(sql + " ORDER BY tanggal DESC");
+    }
+
+    private String salesFilterSql(String period, OptionItem jenis) {
+        String sql = "";
+        sql = periodSql(sql, "p.tanggal", period);
+        if (jenis != null) sql += " AND EXISTS (SELECT 1 FROM detail_penjualan dx WHERE dx.penjualan_id=p.id AND dx.jenis_ikan_id=" + jenis.getId() + ")";
+        return sql;
     }
 
     private String periodSql(String base, String column, String period) {

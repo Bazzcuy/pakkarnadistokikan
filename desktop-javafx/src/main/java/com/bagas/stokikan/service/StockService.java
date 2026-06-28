@@ -15,7 +15,7 @@ public class StockService {
                 double after = before + beratKg;
                 Database.insertAndGetId(c, "INSERT INTO stok_masuk(tanggal,jenis_ikan_id,supplier_id,berat_kg,harga_beli_per_kg,total_beli,catatan) VALUES(?,?,?,?,?,?,?)", DateUtil.today(), jenisIkanId, supplierId, beratKg, hargaBeli, beratKg * hargaBeli, catatan);
                 Database.execute(c, "INSERT INTO stok_mentah(jenis_ikan_id,total_kg,updated_at) VALUES(?,?,?) ON CONFLICT(jenis_ikan_id) DO UPDATE SET total_kg=?, updated_at=?", jenisIkanId, after, DateUtil.now(), after, DateUtil.now());
-                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?)", DateUtil.now(), "STOK_MASUK", "MENTAH", "stok_masuk", beratKg, before, after, catatan);
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "STOK_MASUK", "MENTAH", "stok_masuk", beratKg, before, after, catatan);
                 c.commit();
             } catch (Exception e) {
                 c.rollback();

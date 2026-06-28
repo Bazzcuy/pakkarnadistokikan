@@ -27,7 +27,7 @@ public class Database {
             s.execute("CREATE TABLE IF NOT EXISTS detail_penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, stok_giling_id INTEGER NOT NULL, jenis_ikan_id INTEGER NOT NULL, jumlah_kg REAL NOT NULL, harga_per_kg REAL NOT NULL, subtotal REAL NOT NULL, FOREIGN KEY(penjualan_id) REFERENCES penjualan(id), FOREIGN KEY(stok_giling_id) REFERENCES stok_giling(id), FOREIGN KEY(jenis_ikan_id) REFERENCES jenis_ikan(id))");
             s.execute("CREATE TABLE IF NOT EXISTS pembayaran (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, tanggal TEXT NOT NULL, metode TEXT NOT NULL, jumlah_bayar REAL NOT NULL, sisa_bayar REAL NOT NULL, status TEXT NOT NULL, catatan TEXT, FOREIGN KEY(penjualan_id) REFERENCES penjualan(id))");
             s.execute("CREATE TABLE IF NOT EXISTS penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
-            s.execute("CREATE TABLE IF NOT EXISTS riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
+            s.execute("CREATE TABLE IF NOT EXISTS riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT, FOREIGN KEY(jenis_ikan_id) REFERENCES jenis_ikan(id))");
             migrate(c);
             seed(c);
         } catch (SQLException e) {
@@ -40,6 +40,9 @@ public class Database {
         addColumnIfMissing(c, "users", "nomor_hp", "TEXT");
         addColumnIfMissing(c, "users", "alamat", "TEXT");
         addColumnIfMissing(c, "jenis_ikan", "gambar_path", "TEXT");
+        addColumnIfMissing(c, "riwayat_stok", "jenis_ikan_id", "INTEGER");
+        execute(c, "UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");
+        execute(c, "UPDATE riwayat_stok SET jenis_ikan_id=(SELECT d.jenis_ikan_id FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id WHERE p.nomor_transaksi=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'TRX-%'");
     }
 
     private static void addColumnIfMissing(Connection c, String table, String column, String type) throws SQLException {
@@ -177,7 +180,7 @@ public class Database {
         insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", penjualanId, tanggal, metode, bayar, sisa, status, "Data dummy simulasi transaksi");
         double after = stok - kg;
         execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", after, after <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
-        execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?)", tanggal + " 10:00:00", "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan dummy simulasi");
+        execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", tanggal + " 10:00:00", jenisId, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan dummy simulasi");
     }
 
     public static void execute(Connection c, String sql, Object... params) throws SQLException {

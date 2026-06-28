@@ -16,7 +16,7 @@ import java.util.List;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "stok_ikan_giling_android.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
 
     public DbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -35,12 +35,18 @@ public class DbHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, nomor_transaksi TEXT UNIQUE NOT NULL, tanggal TEXT NOT NULL, pelanggan_id INTEGER, kasir_id INTEGER, subtotal REAL NOT NULL, diskon REAL DEFAULT 0, total REAL NOT NULL, status_pembayaran TEXT NOT NULL)");
         db.execSQL("CREATE TABLE detail_penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, stok_giling_id INTEGER NOT NULL, jenis_ikan_id INTEGER NOT NULL, jumlah_kg REAL NOT NULL, harga_per_kg REAL NOT NULL, subtotal REAL NOT NULL)");
         db.execSQL("CREATE TABLE pembayaran (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, tanggal TEXT NOT NULL, metode TEXT NOT NULL, jumlah_bayar REAL NOT NULL, sisa_bayar REAL NOT NULL, status TEXT NOT NULL, catatan TEXT)");
-        db.execSQL("CREATE TABLE riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
+        db.execSQL("CREATE TABLE riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
         seed(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion >= 3 && newVersion >= 4) {
+            addColumn(db, "riwayat_stok", "jenis_ikan_id", "INTEGER");
+            db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");
+            db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT d.jenis_ikan_id FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id WHERE p.nomor_transaksi=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'TRX-%'");
+            return;
+        }
         db.execSQL("DROP TABLE IF EXISTS pembayaran");
         db.execSQL("DROP TABLE IF EXISTS detail_penjualan");
         db.execSQL("DROP TABLE IF EXISTS penjualan");
@@ -54,6 +60,13 @@ public class DbHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS users");
         db.execSQL("DROP TABLE IF EXISTS riwayat_stok");
         onCreate(db);
+    }
+
+    private void addColumn(SQLiteDatabase db, String table, String column, String type) {
+        try (Cursor c = db.rawQuery("PRAGMA table_info(" + table + ")", null)) {
+            while (c.moveToNext()) if (column.equalsIgnoreCase(c.getString(c.getColumnIndexOrThrow("name")))) return;
+        }
+        db.execSQL("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
     }
 
     private void seed(SQLiteDatabase db) {
@@ -270,6 +283,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         ContentValues r = new ContentValues();
         r.put("tanggal", tanggal + " 10:00:00");
+        r.put("jenis_ikan_id", jenisId);
         r.put("jenis_transaksi", "PENJUALAN");
         r.put("jenis_stok", "GILING");
         r.put("referensi", nomor);

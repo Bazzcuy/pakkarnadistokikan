@@ -20,8 +20,8 @@ public class ProductionService {
                 Database.execute(c, "UPDATE stok_mentah SET total_kg=?, updated_at=? WHERE jenis_ikan_id=?", stokMentahSesudah, DateUtil.now(), jenisIkanId);
                 Database.insertAndGetId(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", batch, DateUtil.today(), jenisIkanId, beratMentah, beratHasil, penyusutan, biayaProduksi, hargaJual, catatan);
                 Database.insertAndGetId(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi,status_stok) VALUES(?,?,?,?,?,?)", jenisIkanId, batch, beratHasil, hargaJual, DateUtil.today(), "TERSEDIA");
-                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?)", DateUtil.now(), "PRODUKSI_KURANG_MENTAH", "MENTAH", batch, -beratMentah, stokSebelum, stokMentahSesudah, "Bahan produksi");
-                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?)", DateUtil.now(), "PRODUKSI_TAMBAH_GILING", "GILING", batch, beratHasil, 0, beratHasil, "Hasil produksi giling");
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PRODUKSI_KURANG_MENTAH", "MENTAH", batch, -beratMentah, stokSebelum, stokMentahSesudah, "Bahan produksi");
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PRODUKSI_TAMBAH_GILING", "GILING", batch, beratHasil, 0, beratHasil, "Hasil produksi giling");
                 c.commit();
                 return batch;
             } catch (Exception e) {
