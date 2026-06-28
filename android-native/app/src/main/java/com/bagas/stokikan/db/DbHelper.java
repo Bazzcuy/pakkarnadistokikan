@@ -306,6 +306,64 @@ public class DbHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    public long register(String nama, String username, String password, String namaUsaha, String nomorHp, String alamat) {
+        if (blank(nama) || blank(username) || blank(password)) throw new IllegalArgumentException("Nama, username, dan password wajib diisi.");
+        if (password.length() < 6) throw new IllegalArgumentException("Password minimal 6 karakter.");
+        ContentValues cv = new ContentValues();
+        cv.put("nama", nama.trim());
+        cv.put("username", username.trim());
+        cv.put("password", PasswordUtil.sha256(password));
+        cv.put("role", "PENGGUNA");
+        cv.put("nama_usaha", text(namaUsaha));
+        cv.put("nomor_hp", text(nomorHp));
+        cv.put("alamat", text(alamat));
+        cv.put("status", "AKTIF");
+        long id = getWritableDatabase().insert("users", null, cv);
+        if (id < 0) throw new IllegalArgumentException("Username sudah dipakai.");
+        return id;
+    }
+
+    public Cursor profile(int userId) {
+        return getReadableDatabase().rawQuery("SELECT id,nama,username,nama_usaha,nomor_hp,alamat FROM users WHERE id=?", new String[]{String.valueOf(userId)});
+    }
+
+    public void updateProfile(int userId, String nama, String namaUsaha, String nomorHp, String alamat) {
+        if (blank(nama)) throw new IllegalArgumentException("Nama pengguna wajib diisi.");
+        ContentValues cv = new ContentValues();
+        cv.put("nama", nama.trim());
+        cv.put("nama_usaha", text(namaUsaha));
+        cv.put("nomor_hp", text(nomorHp));
+        cv.put("alamat", text(alamat));
+        getWritableDatabase().update("users", cv, "id=?", new String[]{String.valueOf(userId)});
+    }
+
+    public void tambahJenisIkan(String nama, String kategori, String deskripsi, String gambarPath) {
+        if (blank(nama)) throw new IllegalArgumentException("Nama jenis ikan wajib diisi.");
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put("nama", nama.trim());
+            cv.put("kategori", blank(kategori) ? "Ikan" : kategori.trim());
+            cv.put("deskripsi", text(deskripsi));
+            cv.put("gambar_path", text(gambarPath));
+            long id = db.insert("jenis_ikan", null, cv);
+            if (id < 0) throw new IllegalArgumentException("Jenis ikan sudah ada.");
+            ContentValues stok = new ContentValues();
+            stok.put("jenis_ikan_id", id);
+            stok.put("total_kg", 0);
+            stok.put("updated_at", DateUtil.now());
+            db.insert("stok_mentah", null, stok);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public Cursor rawQuery(String sql, String... args) {
+        return getReadableDatabase().rawQuery(sql, args);
+    }
+
     public List<OptionItem> options(String table) {
         String label = table.equals("stok_giling") ? "batch_no || ' - ' || total_kg || ' kg'" : "nama";
         String sql = "SELECT id, " + label + " AS label FROM " + table + (table.equals("stok_giling") ? " WHERE total_kg>0" : "") + " ORDER BY id";
@@ -351,5 +409,13 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public int nextId(String table) {
         return (int) scalar("SELECT IFNULL(MAX(id),0)+1 FROM " + table);
+    }
+
+    private boolean blank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String text(String value) {
+        return value == null ? "" : value.trim();
     }
 }

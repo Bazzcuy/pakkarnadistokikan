@@ -13,7 +13,7 @@
             <TextView style="@style/CatokanTitle" android:text="Masuk ke Dashboard" />
             <TextView style="@style/CatokanSubtitle" android:text="Kelola stok ikan dengan tampilan yang bersih, cepat, dan nyaman dipakai di HP." android:layout_marginTop="4dp" />
             <TextView style="@style/CatokanLabel" android:text="Daftar Akun Demo" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_text_panel" android:fontFamily="monospace" android:padding="12dp" android:text="Pengguna : pengguna / pengguna123&#10;Akun demo ini membuka semua fitur stok, produksi, penjualan, dan laporan." android:textColor="@color/catokan_text" android:textSize="13sp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_text_panel" android:padding="12dp" android:text="Pengguna : pengguna / pengguna123&#10;Akun demo ini membuka semua fitur stok, produksi, penjualan, dan laporan." android:textColor="@color/catokan_text" android:textSize="13sp" />
             <TextView style="@style/CatokanLabel" android:text="Username" />
             <EditText android:id="@+id/edtUsername" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_input" android:padding="14dp" android:singleLine="true" android:hint="pengguna" />
             <TextView style="@style/CatokanLabel" android:text="Password" />
@@ -22,7 +22,7 @@
             <TextView style="@style/CatokanLabel" android:text="Masuk Cepat" android:layout_marginTop="8dp" />
             <Button android:id="@+id/btnAdmin" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_secondary_btn" android:text="Login sebagai Pengguna Demo" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
             <Button android:id="@+id/btnKasir" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_secondary_btn" android:text="Isi Akun Demo" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
-            <Button android:id="@+id/btnOperator" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_secondary_btn" android:text="Info Daftar Akun" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
+            <Button android:id="@+id/btnOperator" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_secondary_btn" android:text="Daftar Akun Pengguna" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

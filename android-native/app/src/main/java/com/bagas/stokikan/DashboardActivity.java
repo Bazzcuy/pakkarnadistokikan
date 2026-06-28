@@ -60,6 +60,8 @@ public class DashboardActivity extends Activity {
         sales.setVisibility(View.VISIBLE);
         report.setVisibility(View.VISIBLE);
 
+        findViewById(R.id.btnProfile).setOnClickListener(v -> AppNav.open(this, ProfileActivity.class, user));
+        findViewById(R.id.btnFishMaster).setOnClickListener(v -> AppNav.open(this, FishMasterActivity.class, user));
         rawInput.setOnClickListener(v -> AppNav.open(this, RawStockActivity.class, user));
         production.setOnClickListener(v -> AppNav.open(this, ProductionActivity.class, user));
         sales.setOnClickListener(v -> AppNav.open(this, SalesActivity.class, user));

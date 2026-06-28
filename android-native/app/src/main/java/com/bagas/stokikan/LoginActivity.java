@@ -33,7 +33,7 @@ public class LoginActivity extends Activity {
             password.setText("pengguna123");
             Toast.makeText(this, "Akun demo pengguna sudah diisi.", Toast.LENGTH_SHORT).show();
         });
-        findViewById(R.id.btnOperator).setOnClickListener(v -> Toast.makeText(this, "Daftar akun pengguna tersedia lengkap di aplikasi desktop JavaFX.", Toast.LENGTH_LONG).show());
+        findViewById(R.id.btnOperator).setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
     }
 
     private void login(String u, String p) {
