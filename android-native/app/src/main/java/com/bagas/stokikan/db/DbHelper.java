@@ -288,15 +288,16 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public String dashboardText() {
-        return "DASHBOARD\n\n" +
-                "Total stok mentah: " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg\n" +
-                "Total stok giling: " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg\n" +
-                "Total penjualan: Rp " + scalar("SELECT IFNULL(SUM(total),0) FROM penjualan") + "\n" +
-                "Sisa belum lunas: Rp " + scalar("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) AS bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS'") + "\n";
+        return "DASHBOARD CATOKAN\n" +
+                "================\n\n" +
+                "Total stok mentah  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg\n" +
+                "Total stok giling  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg\n" +
+                "Total penjualan    : Rp " + scalar("SELECT IFNULL(SUM(total),0) FROM penjualan") + "\n" +
+                "Sisa belum lunas   : Rp " + scalar("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) AS bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS'") + "\n";
     }
 
     public String stokMentahText() {
-        StringBuilder sb = new StringBuilder("STOK IKAN MENTAH\n\n");
+        StringBuilder sb = new StringBuilder("STOK IKAN MENTAH\n================\n\n");
         String sql = "SELECT j.nama, s.total_kg FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id ORDER BY j.nama";
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) sb.append(c.getString(0)).append(" : ").append(c.getDouble(1)).append(" kg\n");
@@ -305,7 +306,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public String stokGilingText() {
-        StringBuilder sb = new StringBuilder("STOK IKAN GILING PER BATCH\n\n");
+        StringBuilder sb = new StringBuilder("STOK IKAN GILING PER BATCH\n==========================\n\n");
         String sql = "SELECT g.id,g.batch_no,j.nama,g.total_kg,g.harga_jual_per_kg FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC";
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) sb.append("ID ").append(c.getInt(0)).append(" | ").append(c.getString(1)).append(" | ").append(c.getString(2)).append(" | ").append(c.getDouble(3)).append(" kg | Rp ").append(c.getDouble(4)).append("/kg\n");

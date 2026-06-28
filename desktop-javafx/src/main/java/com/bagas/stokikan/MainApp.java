@@ -12,7 +12,10 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.File;
 
 public class MainApp extends Application {
     private final AuthService authService = new AuthService();
@@ -21,6 +24,7 @@ public class MainApp extends Application {
     private final ProductionService productionService = new ProductionService();
     private final SalesService salesService = new SalesService();
     private final ReportService reportService = new ReportService();
+    private final ExcelService excelService = new ExcelService();
     private User currentUser;
     private BorderPane root;
 
@@ -55,7 +59,7 @@ public class MainApp extends Application {
         logo.setFitWidth(80); logo.setFitHeight(80);
         VBox brandText = new VBox(4);
         Label title = new Label("CATOKAN"); title.getStyleClass().add("brand-title");
-        Label subtitle = new Label("Catat Stok Ikan • UI lebih modern dan nyaman"); subtitle.getStyleClass().add("brand-sub");
+        Label subtitle = new Label("Catat Stok Ikan - UI lebih modern dan nyaman"); subtitle.getStyleClass().add("brand-sub");
         brandText.getChildren().addAll(title, subtitle);
         brand.getChildren().addAll(logo, brandText);
 
@@ -63,7 +67,7 @@ public class MainApp extends Application {
         loginCard.getStyleClass().add("card");
         loginCard.setMaxWidth(520);
         Label loginTitle = new Label("Masuk ke Dashboard"); loginTitle.getStyleClass().add("panel-title");
-        Label info = new Label("Akun demo: admin/admin123 • kasir/kasir123 • operator/operator123");
+        Label info = new Label("Akun demo: admin/admin123 - kasir/kasir123 - operator/operator123");
         info.getStyleClass().add("brand-sub");
         TextField username = new TextField("admin");
         username.setPromptText("Username");
@@ -114,7 +118,7 @@ public class MainApp extends Application {
         Button stokGiling = nav("Stok Giling", () -> setCenter(textPane(stockService.stokGilingText())));
         Button penjualan = nav("Penjualan", () -> setCenter(penjualanView()));
         Button pembayaran = nav("Pembayaran", () -> setCenter(pembayaranView()));
-        Button laporan = nav("Laporan", () -> setCenter(textPane(reportService.laporanRingkas())));
+        Button laporan = nav("Laporan", () -> setCenter(laporanView(stage)));
         Button logout = nav("Logout", () -> stage.setScene(loginScene(stage)));
 
         stokMentah.setDisable(!canAccess("ADMIN", "OPERATOR"));
@@ -256,11 +260,81 @@ public class MainApp extends Application {
         return box;
     }
 
+    private VBox laporanView(Stage stage) {
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(12));
+        box.getStyleClass().add("card");
+
+        Label head = title("Laporan dan Excel");
+        Label hint = new Label("Export laporan lengkap, buat template import, atau import stok masuk dari file Excel.");
+        hint.getStyleClass().add("brand-sub");
+
+        HBox actions = new HBox(10);
+        Button export = new Button("Export Laporan Excel");
+        export.getStyleClass().add("primary-btn");
+        export.setOnAction(e -> {
+            File file = saveExcel(stage, "laporan-catokan.xlsx");
+            if (file == null) return;
+            try {
+                excelService.exportReport(file.toPath());
+                alert("Berhasil", "Laporan Excel berhasil dibuat:\n" + file.getAbsolutePath());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+
+        Button template = new Button("Template Import");
+        template.getStyleClass().add("secondary-btn");
+        template.setOnAction(e -> {
+            File file = saveExcel(stage, "template-import-stok.xlsx");
+            if (file == null) return;
+            try {
+                excelService.exportStockImportTemplate(file.toPath());
+                alert("Berhasil", "Template import berhasil dibuat:\n" + file.getAbsolutePath());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+
+        Button importExcel = new Button("Import Stok Excel");
+        importExcel.getStyleClass().add("secondary-btn");
+        importExcel.setOnAction(e -> {
+            File file = openExcel(stage);
+            if (file == null) return;
+            try {
+                int rows = excelService.importStockIn(file.toPath());
+                alert("Berhasil", rows + " baris stok masuk berhasil diimport.");
+                setCenter(laporanView(stage));
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        actions.getChildren().addAll(export, template, importExcel);
+
+        TextArea area = area(reportService.laporanRingkas());
+        VBox.setVgrow(area, Priority.ALWAYS);
+        box.getChildren().addAll(head, hint, actions, area);
+        return box;
+    }
+
     private Label title(String t) { Label l = new Label(t); l.getStyleClass().add("panel-title"); return l; }
     private TextField field(String prompt) { TextField f = new TextField(); f.setPromptText(prompt); return f; }
     private TextArea area(String text) { TextArea a = new TextArea(text); a.setEditable(false); a.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;"); HBox.setHgrow(a, Priority.ALWAYS); return a; }
     private ComboBox<OptionItem> combo(java.util.List<OptionItem> items) { ComboBox<OptionItem> c = new ComboBox<>(); c.getItems().addAll(items); if (!items.isEmpty()) c.getSelectionModel().selectFirst(); c.setMaxWidth(Double.MAX_VALUE); return c; }
     private void requireSelected(ComboBox<OptionItem> combo, String label) { if (combo.getValue() == null) throw new IllegalArgumentException(label + " belum dipilih"); }
+    private File saveExcel(Stage stage, String name) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Simpan Excel");
+        chooser.setInitialFileName(name);
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbook", "*.xlsx"));
+        return chooser.showSaveDialog(stage);
+    }
+    private File openExcel(Stage stage) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Pilih File Excel");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbook", "*.xlsx"));
+        return chooser.showOpenDialog(stage);
+    }
     private double toDouble(TextField f) { return Double.parseDouble(f.getText().trim().replace(",", ".")); }
     private double toDoubleOrZero(TextField f) { String v = f.getText() == null ? "" : f.getText().trim(); return v.isEmpty() ? 0 : Double.parseDouble(v.replace(",", ".")); }
     private void alert(String title, String msg) { Alert a = new Alert(Alert.AlertType.INFORMATION); a.setTitle(title); a.setHeaderText(null); a.setContentText(msg); a.showAndWait(); }

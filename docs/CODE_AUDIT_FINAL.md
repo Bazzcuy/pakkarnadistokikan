@@ -89,6 +89,7 @@ Status: aplikasi desktop JavaFX utama untuk presentasi PBO.
 
 - UI desktop memakai branding CATOKAN, sidebar, form, output data, dan role access.
 - Service desktop memakai transaksi database dengan rollback eksplisit.
+- Menu laporan desktop mendukung export/import Excel melalui `ExcelService` agar logika file tidak bercampur dengan UI.
 - Panduan run dan packaging tersedia di `docs/DESKTOP_DISTRIBUTION.md`.
 
 ## Catatan Batasan

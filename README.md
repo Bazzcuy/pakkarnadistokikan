@@ -73,3 +73,6 @@ Aplikasi Android dan Desktop sengaja dibuat **tidak saling terhubung**, sesuai r
 - Password demo disimpan dalam bentuk hash SHA-256 pada database baru.
 - Logika stok, produksi, penjualan, pembayaran, dan riwayat stok dibuat transactional.
 - Android siap dipush ke GitHub dan menghasilkan APK debug lewat workflow Actions.
+- Desktop mendukung export laporan Excel, template import Excel, dan import stok masuk dari Excel.
+- Icon Android diganti ke vector drawable agar tidak bergantung pada emoji/font perangkat.
+- Logo CATOKAN diproses dengan alpha rounded corner agar tidak muncul sudut kotak tajam.

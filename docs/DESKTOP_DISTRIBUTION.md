@@ -41,3 +41,19 @@ jpackage --type exe --name CATOKAN --app-version 1.0.0 --input target --main-jar
 Output installer akan muncul di folder `desktop-javafx`.
 
 Catatan: kalau fokusnya tugas PBO, opsi run via Maven lebih mudah dijelaskan karena dosen bisa langsung melihat struktur OOP: model, service, database helper, dan UI JavaFX.
+
+## Fitur Excel
+
+Menu `Laporan` pada aplikasi desktop menyediakan:
+
+- `Export Laporan Excel`: membuat workbook `.xlsx` berisi ringkasan, stok mentah, stok giling, penjualan, dan riwayat stok.
+- `Template Import`: membuat template `.xlsx` untuk input stok masuk.
+- `Import Stok Excel`: membaca sheet pertama template dan memasukkan stok masuk ke database.
+
+Format kolom import:
+
+```text
+Jenis Ikan | Supplier | Berat Kg | Harga Beli per Kg | Catatan
+```
+
+Nama jenis ikan dan supplier harus sama dengan data master agar validasi tetap jelas.
