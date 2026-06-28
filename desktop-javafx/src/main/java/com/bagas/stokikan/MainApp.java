@@ -5,8 +5,11 @@ import com.bagas.stokikan.model.OptionItem;
 import com.bagas.stokikan.model.User;
 import com.bagas.stokikan.service.*;
 import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -16,6 +19,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MainApp extends Application {
     private final AuthService authService = new AuthService();
@@ -23,12 +29,9 @@ public class MainApp extends Application {
     private final StockService stockService = new StockService();
     private final ProductionService productionService = new ProductionService();
     private final SalesService salesService = new SalesService();
-    private final ReportService reportService = new ReportService();
     private final ExcelService excelService = new ExcelService();
     private User currentUser;
     private BorderPane root;
-    private VBox menu;
-    private String workspaceMode;
 
     public static void main(String[] args) {
         launch(args);
@@ -37,7 +40,7 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) {
         Database.initialize();
-        stage.setTitle("CATOKAN - Desktop Presentation App");
+        stage.setTitle("CATOKAN - Stok Ikan Giling");
         stage.setScene(loginScene(stage));
         stage.show();
     }
@@ -48,114 +51,367 @@ public class MainApp extends Application {
         outer.setAlignment(Pos.TOP_CENTER);
         outer.getStyleClass().add("login-root");
 
-        ImageView banner = new ImageView(new Image(getClass().getResourceAsStream("/images/catokan_banner.png")));
-        banner.setFitWidth(720);
-        banner.setFitHeight(220);
-        banner.setPreserveRatio(false);
-        banner.setSmooth(true);
-
-        HBox brand = new HBox(14);
+        ImageView banner = image("/images/catokan_banner.png", 720, 200);
+        HBox brand = new HBox(14, image("/images/catokan_logo.png", 78, 78), vbox(title("CATOKAN"), sub("Catat Stok Ikan - satu akun pengguna, semua fitur operasional")));
         brand.getStyleClass().add("card");
         brand.setAlignment(Pos.CENTER_LEFT);
-        ImageView logo = new ImageView(new Image(getClass().getResourceAsStream("/images/catokan_logo.png")));
-        logo.setFitWidth(80); logo.setFitHeight(80);
-        VBox brandText = new VBox(4);
-        Label title = new Label("CATOKAN"); title.getStyleClass().add("brand-title");
-        Label subtitle = new Label("Catat Stok Ikan - UI lebih modern dan nyaman"); subtitle.getStyleClass().add("brand-sub");
-        brandText.getChildren().addAll(title, subtitle);
-        brand.getChildren().addAll(logo, brandText);
 
-        VBox loginCard = new VBox(10);
-        loginCard.getStyleClass().add("card");
-        loginCard.setMaxWidth(520);
-        Label loginTitle = new Label("Masuk ke Dashboard"); loginTitle.getStyleClass().add("panel-title");
-        Label info = new Label("Akun demo: admin/admin123 - kasir/kasir123 - operator/operator123");
-        info.getStyleClass().add("brand-sub");
-        TextArea accounts = area("DAFTAR AKUN DEMO\n\nAdmin      : admin / admin123\nKasir      : kasir / kasir123\nProduksi   : operator / operator123");
-        accounts.setPrefRowCount(5);
-        accounts.setWrapText(false);
-        TextField username = new TextField("admin");
-        username.setPromptText("Username");
+        TabPane tabs = new TabPane();
+        tabs.setMaxWidth(560);
+        tabs.getTabs().add(new Tab("Login", loginForm(stage)));
+        tabs.getTabs().add(new Tab("Daftar Akun", registerForm(stage)));
+        tabs.getTabs().forEach(t -> t.setClosable(false));
+
+        outer.getChildren().addAll(banner, brand, tabs);
+        Scene scene = new Scene(outer, 900, 780);
+        scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
+        return scene;
+    }
+
+    private VBox loginForm(Stage stage) {
+        TextField username = field("Username");
+        username.setText("pengguna");
         PasswordField password = new PasswordField();
         password.setPromptText("Password");
-        password.setText("admin123");
-        Button login = new Button("Login"); login.getStyleClass().add("primary-btn");
+        password.setText("pengguna123");
+        Button login = primary("Masuk");
         login.setMaxWidth(Double.MAX_VALUE);
         login.setOnAction(e -> {
             currentUser = authService.login(username.getText(), password.getText());
-            if (currentUser == null) {
-                alert("Login gagal", "Username atau password salah.");
-            } else {
+            if (currentUser == null) alert("Login gagal", "Username atau password salah.");
+            else stage.setScene(appScene(stage));
+        });
+        TextArea demo = area("AKUN DEMO\n\npengguna / pengguna123");
+        demo.setPrefRowCount(3);
+        return form(title("Masuk Pengguna"), sub("Gunakan akun demo atau daftar akun baru."), demo, new Label("Username"), username, new Label("Password"), password, login);
+    }
+
+    private VBox registerForm(Stage stage) {
+        TextField nama = field("Nama pengguna");
+        TextField username = field("Username");
+        PasswordField password = new PasswordField();
+        password.setPromptText("Password minimal 6 karakter");
+        TextField usaha = field("Nama usaha");
+        TextField hp = field("Nomor HP");
+        TextField alamat = field("Alamat");
+        Button daftar = primary("Daftar dan Masuk");
+        daftar.setMaxWidth(Double.MAX_VALUE);
+        daftar.setOnAction(e -> {
+            try {
+                currentUser = authService.register(nama.getText(), username.getText(), password.getText(), usaha.getText(), hp.getText(), alamat.getText());
                 stage.setScene(appScene(stage));
+            } catch (Exception ex) {
+                alert("Gagal daftar", ex.getMessage());
             }
         });
-        HBox quick = new HBox(8);
-        Button admin = quickLogin("Admin", username, password, "admin", "admin123");
-        Button kasir = quickLogin("Kasir", username, password, "kasir", "kasir123");
-        Button operator = quickLogin("Produksi", username, password, "operator", "operator123");
-        quick.getChildren().addAll(admin, kasir, operator);
-
-        loginCard.getChildren().addAll(loginTitle, info, accounts, new Label("Username"), username, new Label("Password"), password, quick, login);
-
-        outer.getChildren().addAll(banner, brand, loginCard);
-        Scene scene = new Scene(outer, 860, 760);
-        scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
-        return scene;
+        return form(title("Daftar Akun Pengguna"), sub("Satu akun bisa mengakses semua fitur stok, produksi, penjualan, dan laporan."), nama, username, password, usaha, hp, alamat, daftar);
     }
 
     private Scene appScene(Stage stage) {
         root = new BorderPane();
         root.setPadding(new Insets(14));
-
-        if (workspaceMode == null || !workspaceAllowed(workspaceMode)) workspaceMode = defaultWorkspace();
-        menu = new VBox(10);
+        VBox menu = new VBox(10);
         menu.setPadding(new Insets(14));
         menu.setPrefWidth(260);
         menu.getStyleClass().add("card");
 
-        HBox brand = new HBox(10);
+        HBox brand = new HBox(10, image("/images/catokan_logo.png", 48, 48), vbox(title("CATOKAN"), sub(currentUser.getNama())));
         brand.setAlignment(Pos.CENTER_LEFT);
-        ImageView logo = new ImageView(new Image(getClass().getResourceAsStream("/images/catokan_logo.png")));
-        logo.setFitWidth(48); logo.setFitHeight(48);
-        VBox userWrap = new VBox(2);
-        Label brandLabel = new Label("CATOKAN"); brandLabel.getStyleClass().add("panel-title");
-        Label user = new Label("Login: " + currentUser.getNama() + " (" + currentUser.getRole() + ")");
-        user.getStyleClass().add("brand-sub");
-        userWrap.getChildren().addAll(brandLabel, user);
-        brand.getChildren().addAll(logo, userWrap);
-
-        Label workspace = new Label("Ruang kerja");
-        workspace.getStyleClass().add("brand-sub");
-        HBox switcher = new HBox(8);
-        Button adminSpace = nav("Admin", () -> setWorkspace(stage, "ADMIN"));
-        Button produksiSpace = nav("Produksi", () -> setWorkspace(stage, "PRODUKSI"));
-        Button kasirSpace = nav("Kasir", () -> setWorkspace(stage, "KASIR"));
-        adminSpace.setDisable(!canAccess("ADMIN"));
-        produksiSpace.setDisable(!canAccess("ADMIN", "OPERATOR"));
-        kasirSpace.setDisable(!canAccess("ADMIN", "KASIR"));
-        switcher.getChildren().addAll(adminSpace, produksiSpace, kasirSpace);
-
-        Button dashboard = nav("Dashboard", () -> setCenter(dashboardHome()));
-        Button stokMentah = nav("Stok Mentah", () -> setCenter(stokMentahView()));
-        Button produksi = nav("Produksi Giling", () -> setCenter(produksiView()));
-        Button stokGiling = nav("Stok Giling", () -> setCenter(textPane(stockService.stokGilingText())));
-        Button penjualan = nav("Penjualan", () -> setCenter(penjualanView()));
-        Button pembayaran = nav("Pembayaran", () -> setCenter(pembayaranView()));
-        Button laporan = nav("Laporan", () -> setCenter(laporanView(stage)));
+        Button dashboard = nav("Dashboard", () -> setCenter(dashboardView()));
+        Button profil = nav("Profil", () -> setCenter(profileView()));
+        Button jenis = nav("Jenis Ikan", () -> setCenter(fishMasterView(stage)));
+        Button stokMentah = nav("Stok Mentah", () -> setCenter(rawStockView(stage)));
+        Button produksi = nav("Produksi Giling", () -> setCenter(productionView()));
+        Button stokGiling = nav("Stok Giling", () -> setCenter(milledStockView()));
+        Button penjualan = nav("Penjualan", () -> setCenter(salesView()));
+        Button riwayat = nav("Riwayat", () -> setCenter(historyView()));
+        Button laporan = nav("Laporan & Excel", () -> setCenter(reportView(stage)));
         Button logout = nav("Logout", () -> stage.setScene(loginScene(stage)));
+        menu.getChildren().addAll(brand, dashboard, profil, jenis, stokMentah, produksi, stokGiling, penjualan, riwayat, laporan, logout);
 
-        stokMentah.setDisable(!canAccess("ADMIN", "OPERATOR"));
-        produksi.setDisable(!canAccess("ADMIN", "OPERATOR"));
-        penjualan.setDisable(!canAccess("ADMIN", "KASIR"));
-        pembayaran.setDisable(!canAccess("ADMIN", "KASIR"));
-
-        menu.getChildren().addAll(brand, workspace, switcher, dashboard, stokMentah, produksi, stokGiling, penjualan, pembayaran, laporan, logout);
         root.setLeft(menu);
-        applyWorkspaceVisibility(stokMentah, produksi, stokGiling, penjualan, pembayaran, laporan);
-        root.setCenter(dashboardHome());
-        Scene scene = new Scene(root, 1180, 760);
+        root.setCenter(dashboardView());
+        Scene scene = new Scene(root, 1240, 780);
         scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
         return scene;
+    }
+
+    private VBox dashboardView() {
+        HBox stats = new HBox(12,
+                stat("Stok Mentah", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg"),
+                stat("Stok Giling", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg"),
+                stat("Penjualan", "Rp " + scalar("SELECT IFNULL(SUM(total),0) FROM penjualan")),
+                stat("Jenis Ikan", scalar("SELECT COUNT(*) FROM jenis_ikan WHERE aktif=1")));
+        GridPane grid = fishCards(Database.query("SELECT j.nama,j.kategori,j.gambar_path,IFNULL(sm.total_kg,0) AS mentah,IFNULL(SUM(sg.total_kg),0) AS giling FROM jenis_ikan j LEFT JOIN stok_mentah sm ON sm.jenis_ikan_id=j.id LEFT JOIN stok_giling sg ON sg.jenis_ikan_id=j.id GROUP BY j.id ORDER BY j.nama"));
+        return page("Dashboard Stok", sub("Ringkasan stok mentah, stok giling, dan produk per jenis ikan."), stats, scroll(grid));
+    }
+
+    private VBox profileView() {
+        Map<String, Object> p = authService.profile(currentUser.getId());
+        TextField nama = field("Nama");
+        nama.setText(value(p, "nama"));
+        TextField usaha = field("Nama usaha");
+        usaha.setText(value(p, "nama_usaha"));
+        TextField hp = field("Nomor HP");
+        hp.setText(value(p, "nomor_hp"));
+        TextField alamat = field("Alamat");
+        alamat.setText(value(p, "alamat"));
+        Button save = primary("Simpan Profil");
+        save.setOnAction(e -> {
+            try {
+                authService.updateProfile(currentUser.getId(), nama.getText(), usaha.getText(), hp.getText(), alamat.getText());
+                currentUser = new User(currentUser.getId(), nama.getText(), currentUser.getUsername(), "PENGGUNA");
+                alert("Berhasil", "Profil pengguna tersimpan.");
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        return page("Profil Pengguna", sub("Informasi ini dipakai sebagai identitas usaha di aplikasi."), form(nama, usaha, hp, alamat, save));
+    }
+
+    private VBox fishMasterView(Stage stage) {
+        TextField nama = field("Nama jenis ikan");
+        TextField kategori = field("Kategori");
+        TextField desc = field("Deskripsi");
+        TextField gambar = field("Path gambar");
+        Button pilih = secondary("Pilih Gambar");
+        pilih.setOnAction(e -> {
+            File file = openImage(stage);
+            if (file != null) gambar.setText(file.getAbsolutePath());
+        });
+        Button tambah = primary("Tambah Jenis Ikan");
+        tambah.setOnAction(e -> {
+            try {
+                masterService.tambahJenisIkan(nama.getText(), kategori.getText(), desc.getText(), gambar.getText());
+                setCenter(fishMasterView(stage));
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        TableView<Map<String, Object>> table = table(Database.query("SELECT nama,kategori,deskripsi,gambar_path FROM jenis_ikan WHERE aktif=1 ORDER BY nama"));
+        HBox wrap = new HBox(12, form(title("Input Jenis Ikan"), nama, kategori, desc, gambar, pilih, tambah), table);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return page("Jenis Ikan", sub("Kelola master ikan dan gambar produk."), wrap);
+    }
+
+    private VBox rawStockView(Stage stage) {
+        ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
+        ComboBox<OptionItem> supplier = combo(masterService.suppliers());
+        TextField berat = field("Berat masuk kg");
+        TextField harga = field("Harga beli per kg");
+        TextField catatan = field("Catatan");
+        Button simpan = primary("Simpan Stok Masuk");
+        simpan.setOnAction(e -> {
+            try {
+                stockService.inputStokMentah(jenis.getValue().getId(), supplier.getValue().getId(), toDouble(berat), toDouble(harga), catatan.getText());
+                setCenter(rawStockView(stage));
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        TableView<Map<String, Object>> table = table(Database.query("SELECT j.nama AS jenis_ikan, j.gambar_path, s.total_kg, s.updated_at FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id ORDER BY j.nama"));
+        HBox wrap = new HBox(12, form(title("Input Stok Awal/Masuk"), jenis, supplier, berat, harga, catatan, simpan), table);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return page("Stok Mentah", sub("Daftar stok mentah per jenis ikan lengkap dengan data update."), wrap);
+    }
+
+    private VBox productionView() {
+        ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
+        TextField mentah = field("Berat mentah digunakan kg");
+        TextField hasil = field("Berat hasil giling kg");
+        TextField biaya = field("Biaya produksi");
+        TextField harga = field("Harga jual per kg");
+        TextField catatan = field("Catatan");
+        Button proses = primary("Proses Produksi");
+        proses.setOnAction(e -> {
+            try {
+                String batch = productionService.prosesProduksi(jenis.getValue().getId(), toDouble(mentah), toDouble(hasil), toDoubleOrZero(biaya), toDouble(harga), catatan.getText());
+                alert("Berhasil", "Batch produksi: " + batch);
+                setCenter(milledStockView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        TableView<Map<String, Object>> table = table(Database.query("SELECT p.batch_no,p.tanggal,j.nama AS jenis_ikan,p.berat_mentah_kg,p.berat_hasil_kg,p.penyusutan_kg,p.harga_jual_per_kg,p.catatan FROM produksi_giling p JOIN jenis_ikan j ON j.id=p.jenis_ikan_id ORDER BY p.id DESC"));
+        HBox wrap = new HBox(12, form(title("Input Produksi Giling"), jenis, mentah, hasil, biaya, harga, catatan, proses), table);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return page("Produksi Ikan Giling", sub("Produksi mengurangi stok mentah dan menambah batch stok giling."), wrap);
+    }
+
+    private VBox milledStockView() {
+        TableView<Map<String, Object>> table = table(Database.query("SELECT g.batch_no,j.nama AS jenis_ikan,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC"));
+        GridPane cards = fishCards(Database.query("SELECT j.nama,j.kategori,j.gambar_path,0 AS mentah,IFNULL(SUM(g.total_kg),0) AS giling FROM jenis_ikan j LEFT JOIN stok_giling g ON g.jenis_ikan_id=j.id GROUP BY j.id ORDER BY j.nama"));
+        return page("Stok Ikan Giling", sub("Stok giling per batch dan total produk per jenis ikan."), scroll(cards), table);
+    }
+
+    private VBox salesView() {
+        ComboBox<OptionItem> pelanggan = combo(masterService.pelanggan());
+        ComboBox<OptionItem> batch = combo(masterService.batchGiling());
+        TextField kg = field("Jumlah kg");
+        TextField metode = field("Metode bayar");
+        metode.setText("Tunai");
+        TextField bayar = field("Jumlah bayar");
+        Button simpan = primary("Simpan Penjualan");
+        simpan.setOnAction(e -> {
+            try {
+                String result = salesService.jualCepat(currentUser, pelanggan.getValue().getId(), batch.getValue().getId(), toDouble(kg), metode.getText(), toDoubleOrZero(bayar));
+                alert("Berhasil", result);
+                setCenter(salesView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        TableView<Map<String, Object>> table = table(Database.query("SELECT p.nomor_transaksi,p.tanggal,pl.nama AS pelanggan,p.total,p.status_pembayaran FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id ORDER BY p.id DESC"));
+        HBox wrap = new HBox(12, form(title("Input Penjualan"), pelanggan, batch, kg, metode, bayar, simpan), table);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return page("Penjualan", sub("Transaksi keluar otomatis mengurangi stok giling."), wrap);
+    }
+
+    private VBox historyView() {
+        ComboBox<String> periode = new ComboBox<>(FXCollections.observableArrayList("Semua", "Hari Ini", "Minggu Ini", "Bulan Ini"));
+        periode.getSelectionModel().selectFirst();
+        ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
+        Button filter = primary("Terapkan Filter");
+        VBox box = page("Riwayat Stok", sub("Riwayat masuk, produksi, dan keluar keseluruhan atau per ikan."));
+        Runnable refresh = () -> {
+            box.getChildren().removeIf(n -> n instanceof TableView);
+            box.getChildren().add(table(historyRows(periode.getValue(), jenis.getValue())));
+        };
+        filter.setOnAction(e -> refresh.run());
+        box.getChildren().add(1, new HBox(10, new Label("Periode"), periode, new Label("Jenis"), jenis, filter));
+        refresh.run();
+        return box;
+    }
+
+    private VBox reportView(Stage stage) {
+        ComboBox<String> periode = new ComboBox<>(FXCollections.observableArrayList("Semua", "Hari Ini", "Minggu Ini", "Bulan Ini"));
+        periode.getSelectionModel().selectFirst();
+        Button export = primary("Export Laporan Excel");
+        export.setOnAction(e -> {
+            File file = saveExcel(stage, "laporan-catokan.xlsx");
+            if (file == null) return;
+            try {
+                excelService.exportReport(file.toPath());
+                alert("Berhasil", "Laporan Excel dibuat:\n" + file.getAbsolutePath());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        Button template = secondary("Template Import Excel");
+        template.setOnAction(e -> {
+            File file = saveExcel(stage, "template-import-stok.xlsx");
+            if (file == null) return;
+            excelService.exportStockImportTemplate(file.toPath());
+            alert("Berhasil", "Template dibuat.");
+        });
+        Button importExcel = secondary("Import Stok Excel");
+        importExcel.setOnAction(e -> {
+            File file = openExcel(stage);
+            if (file == null) return;
+            int rows = excelService.importStockIn(file.toPath());
+            alert("Berhasil", rows + " baris stok masuk diimport.");
+            setCenter(reportView(stage));
+        });
+        VBox box = page("Laporan Ringkas", sub("Laporan bisa dilihat semua, harian, mingguan, atau bulanan."), new HBox(10, new Label("Periode"), periode, export, template, importExcel));
+        Runnable refresh = () -> {
+            box.getChildren().removeIf(n -> n instanceof TableView || (n instanceof HBox h && h.getStyleClass().contains("stats-row")));
+            HBox stats = new HBox(12,
+                    stat("Penjualan", "Rp " + scalar(periodSql("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE 1=1", "tanggal", periode.getValue()))),
+                    stat("Stok Mentah", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg"),
+                    stat("Stok Giling", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg"));
+            stats.getStyleClass().add("stats-row");
+            box.getChildren().add(2, stats);
+            box.getChildren().add(table(Database.query(periodSql("SELECT nomor_transaksi,tanggal,total,status_pembayaran FROM penjualan WHERE 1=1", "tanggal", periode.getValue()) + " ORDER BY tanggal DESC")));
+        };
+        periode.setOnAction(e -> refresh.run());
+        refresh.run();
+        return box;
+    }
+
+    private List<Map<String, Object>> historyRows(String period, OptionItem jenis) {
+        String sql = "SELECT tanggal,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan FROM riwayat_stok WHERE 1=1";
+        sql = periodSql(sql, "tanggal", period);
+        if (jenis != null) sql += " AND (keterangan LIKE '%" + jenis.getLabel().replace("'", "''") + "%' OR referensi IS NOT NULL)";
+        return Database.query(sql + " ORDER BY tanggal DESC");
+    }
+
+    private String periodSql(String base, String column, String period) {
+        if ("Hari Ini".equals(period)) return base + " AND date(" + column + ")=date('now')";
+        if ("Minggu Ini".equals(period)) return base + " AND date(" + column + ")>=date('now','-7 day')";
+        if ("Bulan Ini".equals(period)) return base + " AND strftime('%Y-%m'," + column + ")=strftime('%Y-%m','now')";
+        return base;
+    }
+
+    private GridPane fishCards(List<Map<String, Object>> rows) {
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(12);
+        int col = 0, row = 0;
+        for (Map<String, Object> r : rows) {
+            VBox card = new VBox(8);
+            card.getStyleClass().add("card");
+            card.setPrefWidth(210);
+            ImageView img = image(value(r, "gambar_path"), 190, 96);
+            Label name = title(value(r, "nama"));
+            Label meta = sub("Mentah: " + value(r, "mentah") + " kg | Giling: " + value(r, "giling") + " kg");
+            card.getChildren().addAll(img, name, meta);
+            grid.add(card, col, row);
+            if (++col == 3) { col = 0; row++; }
+        }
+        return grid;
+    }
+
+    private TableView<Map<String, Object>> table(List<Map<String, Object>> rows) {
+        TableView<Map<String, Object>> table = new TableView<>(FXCollections.observableArrayList(rows));
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        if (!rows.isEmpty()) {
+            for (String key : rows.get(0).keySet()) {
+                TableColumn<Map<String, Object>, String> col = new TableColumn<>(key.replace("_", " ").toUpperCase());
+                col.setCellValueFactory(data -> new SimpleStringProperty(value(data.getValue(), key)));
+                table.getColumns().add(col);
+            }
+        }
+        VBox.setVgrow(table, Priority.ALWAYS);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return table;
+    }
+
+    private HBox stat(String label, String value) {
+        VBox box = new VBox(4, sub(label), title(value));
+        box.getStyleClass().add("card");
+        box.setPrefWidth(210);
+        return new HBox(box);
+    }
+
+    private VBox page(String heading, Node... nodes) {
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(12));
+        box.getStyleClass().add("card");
+        box.getChildren().add(title(heading));
+        box.getChildren().addAll(nodes);
+        return box;
+    }
+
+    private VBox form(Node... nodes) {
+        VBox box = new VBox(8);
+        box.getStyleClass().add("card");
+        box.setPadding(new Insets(12));
+        box.setPrefWidth(300);
+        box.getChildren().addAll(nodes);
+        return box;
+    }
+
+    private VBox vbox(Node... nodes) {
+        VBox box = new VBox(4);
+        box.getChildren().addAll(nodes);
+        return box;
+    }
+
+    private ScrollPane scroll(Node node) {
+        ScrollPane sp = new ScrollPane(node);
+        sp.setFitToWidth(true);
+        sp.setPrefHeight(260);
+        return sp;
     }
 
     private Button nav(String text, Runnable action) {
@@ -166,239 +422,90 @@ public class MainApp extends Application {
         return b;
     }
 
-    private Button quickLogin(String label, TextField username, PasswordField password, String u, String p) {
-        Button b = new Button(label);
-        b.getStyleClass().add("secondary-btn");
-        b.setOnAction(e -> {
-            username.setText(u);
-            password.setText(p);
-        });
+    private Button primary(String text) {
+        Button b = new Button(text);
+        b.getStyleClass().add("primary-btn");
         return b;
     }
 
-    private String defaultWorkspace() {
-        if (canAccess("KASIR") && !canAccess("ADMIN")) return "KASIR";
-        if (canAccess("OPERATOR") && !canAccess("ADMIN")) return "PRODUKSI";
-        return "ADMIN";
+    private Button secondary(String text) {
+        Button b = new Button(text);
+        b.getStyleClass().add("secondary-btn");
+        return b;
     }
 
-    private boolean workspaceAllowed(String mode) {
-        if ("ADMIN".equals(mode)) return canAccess("ADMIN");
-        if ("PRODUKSI".equals(mode)) return canAccess("ADMIN", "OPERATOR");
-        if ("KASIR".equals(mode)) return canAccess("ADMIN", "KASIR");
-        return false;
+    private Label title(String text) {
+        Label l = new Label(text);
+        l.getStyleClass().add("panel-title");
+        return l;
     }
 
-    private void setWorkspace(Stage stage, String mode) {
-        workspaceMode = mode;
-        stage.setScene(appScene(stage));
+    private Label sub(String text) {
+        Label l = new Label(text);
+        l.getStyleClass().add("brand-sub");
+        l.setWrapText(true);
+        return l;
     }
 
-    private void applyWorkspaceVisibility(Button stokMentah, Button produksi, Button stokGiling, Button penjualan, Button pembayaran, Button laporan) {
-        stokMentah.setVisible("ADMIN".equals(workspaceMode) || "PRODUKSI".equals(workspaceMode));
-        stokMentah.setManaged(stokMentah.isVisible());
-        produksi.setVisible("ADMIN".equals(workspaceMode) || "PRODUKSI".equals(workspaceMode));
-        produksi.setManaged(produksi.isVisible());
-        stokGiling.setVisible(true);
-        stokGiling.setManaged(true);
-        penjualan.setVisible("ADMIN".equals(workspaceMode) || "KASIR".equals(workspaceMode));
-        penjualan.setManaged(penjualan.isVisible());
-        pembayaran.setVisible("ADMIN".equals(workspaceMode) || "KASIR".equals(workspaceMode));
-        pembayaran.setManaged(pembayaran.isVisible());
-        laporan.setVisible("ADMIN".equals(workspaceMode) || "KASIR".equals(workspaceMode));
-        laporan.setManaged(laporan.isVisible());
+    private TextField field(String prompt) {
+        TextField f = new TextField();
+        f.setPromptText(prompt);
+        return f;
     }
 
-    private VBox dashboardHome() {
-        String label = switch (workspaceMode) {
-            case "PRODUKSI" -> "Dashboard Produksi";
-            case "KASIR" -> "Dashboard Kasir";
-            default -> "Dashboard Admin";
-        };
-        String text = label + "\n" + "=".repeat(label.length()) + "\n\n" + reportService.dashboard();
-        return textPane(text);
+    private TextArea area(String text) {
+        TextArea a = new TextArea(text);
+        a.setEditable(false);
+        a.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;");
+        return a;
     }
 
-    private boolean canAccess(String... roles) {
-        if (currentUser == null || currentUser.getRole() == null) return false;
-        for (String role : roles) if (role.equalsIgnoreCase(currentUser.getRole())) return true;
-        return false;
+    private ComboBox<OptionItem> combo(List<OptionItem> items) {
+        ComboBox<OptionItem> c = new ComboBox<>(FXCollections.observableArrayList(items));
+        if (!items.isEmpty()) c.getSelectionModel().selectFirst();
+        c.setMaxWidth(Double.MAX_VALUE);
+        return c;
+    }
+
+    private ImageView image(String path, double width, double height) {
+        Image image;
+        try {
+            if (path != null && path.startsWith("/")) image = new Image(getClass().getResourceAsStream(path));
+            else if (path != null && !path.isBlank()) image = new Image(new File(path).toURI().toString());
+            else image = new Image(getClass().getResourceAsStream("/images/catokan_banner.png"));
+        } catch (Exception e) {
+            image = new Image(getClass().getResourceAsStream("/images/catokan_banner.png"));
+        }
+        ImageView view = new ImageView(image);
+        view.setFitWidth(width);
+        view.setFitHeight(height);
+        view.setPreserveRatio(false);
+        view.setSmooth(true);
+        return view;
+    }
+
+    private String scalar(String sql) {
+        return String.valueOf(Database.query(sql).get(0).values().iterator().next());
+    }
+
+    private String value(Map<String, Object> row, String key) {
+        Object v = row.get(key);
+        return v == null ? "" : String.valueOf(v);
     }
 
     private void setCenter(Pane pane) {
         root.setCenter(pane);
     }
 
-    private VBox textPane(String text) {
-        TextArea output = area(text);
-        output.setWrapText(false);
-        VBox box = new VBox(12);
-        box.setPadding(new Insets(12));
-        box.getStyleClass().add("card");
-        Label head = new Label("Output Sistem");
-        head.getStyleClass().add("panel-title");
-        VBox.setVgrow(output, Priority.ALWAYS);
-        box.getChildren().addAll(head, output);
-        return box;
+    private double toDouble(TextField f) {
+        return Double.parseDouble(f.getText().trim().replace(",", "."));
     }
 
-    private VBox stokMentahView() {
-        ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
-        ComboBox<OptionItem> supplier = combo(masterService.suppliers());
-        TextField berat = field("Berat kg");
-        TextField harga = field("Harga beli per kg");
-        TextField catatan = field("Catatan");
-        Button simpan = new Button("Simpan Stok Masuk");
-        simpan.getStyleClass().add("primary-btn");
-        simpan.setOnAction(e -> {
-            try {
-                requireSelected(jenis, "Jenis ikan");
-                requireSelected(supplier, "Supplier");
-                stockService.inputStokMentah(jenis.getValue().getId(), supplier.getValue().getId(), toDouble(berat), toDouble(harga), catatan.getText());
-                alert("Berhasil", "Stok mentah berhasil ditambahkan.");
-                setCenter(stokMentahView());
-            } catch (Exception ex) { alert("Gagal", ex.getMessage()); }
-        });
-        VBox form = new VBox(8, title("Input Stok Ikan Mentah"), new Label("Jenis Ikan"), jenis, new Label("Supplier"), supplier, berat, harga, catatan, simpan);
-        form.setPadding(new Insets(10));
-        form.getStyleClass().add("card");
-        TextArea area = area(stockService.stokMentahText());
-        HBox wrap = new HBox(12, form, area);
-        HBox.setHgrow(area, Priority.ALWAYS);
-        VBox box = new VBox(wrap); box.setPadding(new Insets(12));
-        return box;
+    private double toDoubleOrZero(TextField f) {
+        String v = f.getText() == null ? "" : f.getText().trim();
+        return v.isEmpty() ? 0 : Double.parseDouble(v.replace(",", "."));
     }
 
-    private VBox produksiView() {
-        ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
-        TextField mentah = field("Berat mentah digunakan (kg)");
-        TextField hasil = field("Berat hasil giling (kg)");
-        TextField biaya = field("Biaya produksi tambahan");
-        TextField hargaJual = field("Harga jual per kg");
-        TextField catatan = field("Catatan produksi");
-        Button proses = new Button("Proses Produksi"); proses.getStyleClass().add("primary-btn");
-        proses.setOnAction(e -> {
-            try {
-                requireSelected(jenis, "Jenis ikan");
-                String batch = productionService.prosesProduksi(jenis.getValue().getId(), toDouble(mentah), toDouble(hasil), toDoubleOrZero(biaya), toDouble(hargaJual), catatan.getText());
-                alert("Berhasil", "Produksi berhasil. Batch: " + batch);
-                setCenter(textPane(stockService.stokGilingText()));
-            } catch (Exception ex) { alert("Gagal", ex.getMessage()); }
-        });
-        VBox form = new VBox(8, title("Input Produksi Ikan Giling"), jenis, mentah, hasil, biaya, hargaJual, catatan, proses);
-        form.setPadding(new Insets(10)); form.getStyleClass().add("card");
-        TextArea area = area(stockService.stokMentahText() + "\n" + stockService.stokGilingText());
-        HBox wrap = new HBox(12, form, area); HBox.setHgrow(area, Priority.ALWAYS);
-        VBox box = new VBox(wrap); box.setPadding(new Insets(12));
-        return box;
-    }
-
-    private VBox penjualanView() {
-        ComboBox<OptionItem> pelanggan = combo(masterService.pelanggan());
-        ComboBox<OptionItem> batch = combo(masterService.batchGiling());
-        TextField kg = field("Jumlah kg");
-        TextField metode = field("Metode bayar (Tunai/Transfer)"); metode.setText("Tunai");
-        TextField bayar = field("Jumlah bayar");
-        Button simpan = new Button("Simpan Penjualan"); simpan.getStyleClass().add("primary-btn");
-        simpan.setOnAction(e -> {
-            try {
-                requireSelected(pelanggan, "Pelanggan");
-                requireSelected(batch, "Batch ikan giling");
-                String hasil = salesService.jualCepat(currentUser, pelanggan.getValue().getId(), batch.getValue().getId(), toDouble(kg), metode.getText(), toDoubleOrZero(bayar));
-                alert("Berhasil", hasil);
-                setCenter(textPane(salesService.transaksiText() + "\n" + stockService.stokGilingText()));
-            } catch (Exception ex) { alert("Gagal", ex.getMessage()); }
-        });
-        VBox form = new VBox(8, title("Input Transaksi Penjualan"), pelanggan, batch, kg, metode, bayar, simpan);
-        form.setPadding(new Insets(10)); form.getStyleClass().add("card");
-        TextArea area = area(salesService.transaksiText() + "\n" + stockService.stokGilingText());
-        HBox wrap = new HBox(12, form, area); HBox.setHgrow(area, Priority.ALWAYS);
-        VBox box = new VBox(wrap); box.setPadding(new Insets(12));
-        return box;
-    }
-
-    private VBox pembayaranView() {
-        TextField idTransaksi = field("ID penjualan belum lunas");
-        TextField bayar = field("Jumlah bayar");
-        TextField metode = field("Metode bayar"); metode.setText("Tunai");
-        Button simpan = new Button("Simpan Pembayaran"); simpan.getStyleClass().add("primary-btn");
-        simpan.setOnAction(e -> {
-            try {
-                salesService.bayarTransaksi(Integer.parseInt(idTransaksi.getText().trim()), toDouble(bayar), metode.getText());
-                alert("Berhasil", "Pembayaran tersimpan.");
-                setCenter(pembayaranView());
-            } catch (Exception ex) { alert("Gagal", ex.getMessage()); }
-        });
-        VBox form = new VBox(8, title("Input Pembayaran Lanjutan"), idTransaksi, bayar, metode, simpan);
-        form.setPadding(new Insets(10)); form.getStyleClass().add("card");
-        TextArea area = area(salesService.pembayaranText());
-        HBox wrap = new HBox(12, form, area); HBox.setHgrow(area, Priority.ALWAYS);
-        VBox box = new VBox(wrap); box.setPadding(new Insets(12));
-        return box;
-    }
-
-    private VBox laporanView(Stage stage) {
-        VBox box = new VBox(12);
-        box.setPadding(new Insets(12));
-        box.getStyleClass().add("card");
-
-        Label head = title("Laporan dan Excel");
-        Label hint = new Label("Export laporan lengkap, buat template import, atau import stok masuk dari file Excel.");
-        hint.getStyleClass().add("brand-sub");
-
-        HBox actions = new HBox(10);
-        Button export = new Button("Export Laporan Excel");
-        export.getStyleClass().add("primary-btn");
-        export.setOnAction(e -> {
-            File file = saveExcel(stage, "laporan-catokan.xlsx");
-            if (file == null) return;
-            try {
-                excelService.exportReport(file.toPath());
-                alert("Berhasil", "Laporan Excel berhasil dibuat:\n" + file.getAbsolutePath());
-            } catch (Exception ex) {
-                alert("Gagal", ex.getMessage());
-            }
-        });
-
-        Button template = new Button("Template Import");
-        template.getStyleClass().add("secondary-btn");
-        template.setOnAction(e -> {
-            File file = saveExcel(stage, "template-import-stok.xlsx");
-            if (file == null) return;
-            try {
-                excelService.exportStockImportTemplate(file.toPath());
-                alert("Berhasil", "Template import berhasil dibuat:\n" + file.getAbsolutePath());
-            } catch (Exception ex) {
-                alert("Gagal", ex.getMessage());
-            }
-        });
-
-        Button importExcel = new Button("Import Stok Excel");
-        importExcel.getStyleClass().add("secondary-btn");
-        importExcel.setOnAction(e -> {
-            File file = openExcel(stage);
-            if (file == null) return;
-            try {
-                int rows = excelService.importStockIn(file.toPath());
-                alert("Berhasil", rows + " baris stok masuk berhasil diimport.");
-                setCenter(laporanView(stage));
-            } catch (Exception ex) {
-                alert("Gagal", ex.getMessage());
-            }
-        });
-        actions.getChildren().addAll(export, template, importExcel);
-
-        TextArea area = area(reportService.laporanRingkas());
-        VBox.setVgrow(area, Priority.ALWAYS);
-        box.getChildren().addAll(head, hint, actions, area);
-        return box;
-    }
-
-    private Label title(String t) { Label l = new Label(t); l.getStyleClass().add("panel-title"); return l; }
-    private TextField field(String prompt) { TextField f = new TextField(); f.setPromptText(prompt); return f; }
-    private TextArea area(String text) { TextArea a = new TextArea(text); a.setEditable(false); a.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 13px;"); HBox.setHgrow(a, Priority.ALWAYS); return a; }
-    private ComboBox<OptionItem> combo(java.util.List<OptionItem> items) { ComboBox<OptionItem> c = new ComboBox<>(); c.getItems().addAll(items); if (!items.isEmpty()) c.getSelectionModel().selectFirst(); c.setMaxWidth(Double.MAX_VALUE); return c; }
-    private void requireSelected(ComboBox<OptionItem> combo, String label) { if (combo.getValue() == null) throw new IllegalArgumentException(label + " belum dipilih"); }
     private File saveExcel(Stage stage, String name) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Simpan Excel");
@@ -406,13 +513,26 @@ public class MainApp extends Application {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbook", "*.xlsx"));
         return chooser.showSaveDialog(stage);
     }
+
     private File openExcel(Stage stage) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Pilih File Excel");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbook", "*.xlsx"));
         return chooser.showOpenDialog(stage);
     }
-    private double toDouble(TextField f) { return Double.parseDouble(f.getText().trim().replace(",", ".")); }
-    private double toDoubleOrZero(TextField f) { String v = f.getText() == null ? "" : f.getText().trim(); return v.isEmpty() ? 0 : Double.parseDouble(v.replace(",", ".")); }
-    private void alert(String title, String msg) { Alert a = new Alert(Alert.AlertType.INFORMATION); a.setTitle(title); a.setHeaderText(null); a.setContentText(msg); a.showAndWait(); }
+
+    private File openImage(Stage stage) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Pilih Gambar Ikan");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Gambar", "*.png", "*.jpg", "*.jpeg"));
+        return chooser.showOpenDialog(stage);
+    }
+
+    private void alert(String title, String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setTitle(title);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
 }

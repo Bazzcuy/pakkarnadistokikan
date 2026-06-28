@@ -28,9 +28,26 @@ public class Database {
             s.execute("CREATE TABLE IF NOT EXISTS pembayaran (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, tanggal TEXT NOT NULL, metode TEXT NOT NULL, jumlah_bayar REAL NOT NULL, sisa_bayar REAL NOT NULL, status TEXT NOT NULL, catatan TEXT, FOREIGN KEY(penjualan_id) REFERENCES penjualan(id))");
             s.execute("CREATE TABLE IF NOT EXISTS penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
             s.execute("CREATE TABLE IF NOT EXISTS riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
+            migrate(c);
             seed(c);
         } catch (SQLException e) {
             throw new RuntimeException("Gagal inisialisasi database: " + e.getMessage(), e);
+        }
+    }
+
+    private static void migrate(Connection c) throws SQLException {
+        addColumnIfMissing(c, "users", "nama_usaha", "TEXT");
+        addColumnIfMissing(c, "users", "nomor_hp", "TEXT");
+        addColumnIfMissing(c, "users", "alamat", "TEXT");
+        addColumnIfMissing(c, "jenis_ikan", "gambar_path", "TEXT");
+    }
+
+    private static void addColumnIfMissing(Connection c, String table, String column, String type) throws SQLException {
+        try (Statement s = c.createStatement(); ResultSet rs = s.executeQuery("PRAGMA table_info(" + table + ")")) {
+            while (rs.next()) if (column.equalsIgnoreCase(rs.getString("name"))) return;
+        }
+        try (Statement s = c.createStatement()) {
+            s.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
         }
     }
 
@@ -42,13 +59,11 @@ public class Database {
 
     private static void seed(Connection c) throws SQLException {
         if (isEmpty(c, "users")) {
-            execute(c, "INSERT INTO users(nama,username,password,role) VALUES(?,?,?,?)", "Administrator", "admin", PasswordUtil.sha256("admin123"), "ADMIN");
-            execute(c, "INSERT INTO users(nama,username,password,role) VALUES(?,?,?,?)", "Kasir", "kasir", PasswordUtil.sha256("kasir123"), "KASIR");
-            execute(c, "INSERT INTO users(nama,username,password,role) VALUES(?,?,?,?)", "Operator Produksi", "operator", PasswordUtil.sha256("operator123"), "OPERATOR");
+            execute(c, "INSERT INTO users(nama,username,password,role,nama_usaha,nomor_hp,alamat) VALUES(?,?,?,?,?,?,?)", "Pengguna CATOKAN", "pengguna", PasswordUtil.sha256("pengguna123"), "PENGGUNA", "Usaha Ikan Giling CATOKAN", "081234567890", "Palembang");
         }
         if (isEmpty(c, "jenis_ikan")) {
             String[] names = {"Tenggiri", "Gabus", "Kakap", "Patin", "Lele", "Belida", "Nila", "Tongkol"};
-            for (String n : names) execute(c, "INSERT INTO jenis_ikan(nama,kategori,deskripsi) VALUES(?,?,?)", n, "Ikan", "Jenis ikan " + n);
+            for (String n : names) execute(c, "INSERT INTO jenis_ikan(nama,kategori,deskripsi,gambar_path) VALUES(?,?,?,?)", n, "Ikan", "Jenis ikan " + n, "/images/catokan_banner.png");
         }
         if (isEmpty(c, "suppliers")) {
             String[][] suppliers = {

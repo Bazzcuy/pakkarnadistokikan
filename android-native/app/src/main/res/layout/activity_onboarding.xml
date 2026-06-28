@@ -6,11 +6,7 @@
             <TextView style="@style/CatokanTitle" android:text="Kelola stok ikan tanpa ribet" />
             <TextView style="@style/CatokanSubtitle" android:text="CATOKAN membantu mencatat stok mentah, produksi giling, transaksi penjualan, dan laporan ringkas secara lokal/offline." android:layout_marginTop="6dp" />
             <TextView style="@style/CatokanLabel" android:text="Fitur unggulan" android:layout_marginTop="10dp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="• Dashboard cepat
-• Input stok dan produksi
-• Penjualan cepat
-• Role Admin, Kasir, Operator
-• SQLite lokal tanpa internet" android:textColor="@color/catokan_text" android:textSize="14sp" android:lineSpacingExtra="4dp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="- Dashboard cepat&#10;- Input stok dan produksi&#10;- Penjualan cepat&#10;- Satu login pengguna untuk semua fitur&#10;- SQLite lokal tanpa internet" android:textColor="@color/catokan_text" android:textSize="14sp" android:lineSpacingExtra="4dp" />
             <Button android:id="@+id/btnStart" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/bg_primary_btn" android:text="Mulai Pakai CATOKAN" android:textAllCaps="false" android:textColor="@color/white" android:textStyle="bold" />
             <Button android:id="@+id/btnSkip" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_secondary_btn" android:text="Lewati ke Login" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
         </LinearLayout>

@@ -6,11 +6,9 @@ Data dummy dibuat agar aplikasi langsung terlihat seperti sistem operasional kec
 
 Password disimpan sebagai hash SHA-256 pada database baru, tetapi login tetap memakai kredensial berikut:
 
-| Nama | Username | Password | Role |
+| Nama | Username | Password | Login |
 |---|---|---|---|
-| Administrator | admin | admin123 | ADMIN |
-| Kasir | kasir | kasir123 | KASIR |
-| Operator Produksi | operator | operator123 | OPERATOR |
+| Pengguna CATOKAN | pengguna | pengguna123 | PENGGUNA |
 
 ## Master Data
 
@@ -90,4 +88,4 @@ Contoh transaksi:
 - TRX-DEMO-003: Rumah Makan Musi Jaya membeli patin dan lunas.
 - TRX-DEMO-004: Pempek Cek Lina membeli tenggiri dan lunas.
 - TRX-DEMO-005: Frozen Food Bukit membeli belida dengan status tempo/belum lunas.
-- TRX-DEMO-006 sampai TRX-DEMO-012: transaksi tambahan untuk simulasi dashboard kasir, laporan, dan pembayaran tempo.
+- TRX-DEMO-006 sampai TRX-DEMO-012: transaksi tambahan untuk simulasi dashboard pengguna, laporan, dan pembayaran tempo.

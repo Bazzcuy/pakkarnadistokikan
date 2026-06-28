@@ -36,8 +36,8 @@ Alur utama sudah dijaga:
 - Produksi ditolak jika stok mentah tidak cukup.
 - Penjualan ditolak jika stok giling tidak cukup.
 - Pembayaran tidak boleh negatif dan tidak boleh melebihi total/sisa tagihan.
-- Role membatasi akses fitur: admin semua menu, operator stok/produksi, kasir penjualan/pembayaran.
-- Setelah login, dashboard dipisah menjadi ruang kerja Admin, Produksi, dan Kasir agar aktivitas tidak bercampur.
+- Sistem memakai satu login pengguna agar alur demo dan operasional tidak terpecah ke banyak role.
+- Setelah login, semua fitur utama tersedia dalam satu dashboard pengguna dengan navigasi terpisah per aktivitas.
 
 ## Database
 
@@ -67,6 +67,7 @@ Password demo tetap mudah dipakai untuk presentasi, tetapi database baru menyimp
 Data dummy sudah diperbanyak:
 
 - 8 jenis ikan.
+- Gambar produk ikan pada master jenis ikan.
 - 10 supplier.
 - 12 pelanggan.
 - Stok mentah bervariasi.
@@ -88,7 +89,7 @@ Status: siap dipush ke GitHub.
 
 Status: aplikasi desktop JavaFX utama untuk presentasi PBO.
 
-- UI desktop memakai branding CATOKAN, sidebar, form, output data, dan role access.
+- UI desktop memakai branding CATOKAN, sidebar, form, card dashboard, tabel data, gambar produk, dan filter laporan.
 - Service desktop memakai transaksi database dengan rollback eksplisit.
 - Menu laporan desktop mendukung export/import Excel melalui `ExcelService` agar logika file tidak bercampur dengan UI.
 - Panduan run dan packaging tersedia di `docs/DESKTOP_DISTRIBUTION.md`.

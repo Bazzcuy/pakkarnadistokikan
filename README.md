@@ -15,24 +15,25 @@ Project ini dibuat sesuai laporan final **Rancang Bangun Aplikasi Pengelolaan St
 
 ## Akun Demo
 
-| Role | Username | Password |
+| Login | Username | Password |
 |---|---|---|
-| Admin | admin | admin123 |
-| Kasir | kasir | kasir123 |
-| Operator Produksi | operator | operator123 |
+| Pengguna | pengguna | pengguna123 |
 
 ## Fitur Utama
 
-- Login berdasarkan role
-- Dashboard ringkas
-- Master jenis ikan, supplier, pelanggan
+- Register dan login satu role pengguna
+- Profil pengguna/usaha
+- Dashboard visual stok mentah, stok giling, penjualan, dan laporan
+- Master jenis ikan lengkap dengan gambar produk
+- Master supplier dan pelanggan
 - Input stok ikan mentah masuk
 - Proses produksi ikan giling
 - Stok ikan giling per batch
 - Transaksi penjualan
 - Pembayaran lunas/belum lunas
 - Riwayat stok
-- Laporan ringkas
+- Laporan ringkas/detail dengan filter hari, minggu, bulan
+- Import dan export Excel pada aplikasi desktop
 - Penyimpanan lokal SQLite
 
 ## Catatan
@@ -70,7 +71,7 @@ Aplikasi Android dan Desktop sengaja dibuat **tidak saling terhubung**, sesuai r
 
 ## Finalisasi Sistem
 - Data dummy diperbanyak agar terlihat seperti simulasi usaha kecil yang berjalan.
-- Setelah login, dashboard dipisah menjadi ruang kerja Admin, Produksi, dan Kasir agar aktivitas tidak bercampur.
+- Setelah login, semua fitur utama tersedia dalam satu dashboard pengguna agar aktivitas lebih ringkas dan tidak bercampur role.
 - Password demo disimpan dalam bentuk hash SHA-256 pada database baru.
 - Logika stok, produksi, penjualan, pembayaran, dan riwayat stok dibuat transactional.
 - Android siap dipush ke GitHub dan menghasilkan APK debug lewat workflow Actions.

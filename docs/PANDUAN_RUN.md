@@ -37,20 +37,20 @@ Database SQLite Android dibuat otomatis oleh `DbHelper` saat aplikasi pertama di
 
 ## C. Akun Login
 
-- Admin: `admin / admin123`
-- Kasir: `kasir / kasir123`
-- Operator: `operator / operator123`
+- Pengguna: `pengguna / pengguna123`
+- Pengguna baru juga bisa dibuat lewat tab **Daftar** pada aplikasi desktop.
 
 ## D. Alur Demo Singkat
 
-1. Login sebagai Admin.
-2. Cek dashboard dan data master.
-3. Input stok mentah masuk.
-4. Proses produksi giling dari stok mentah.
-5. Cek stok ikan giling per batch.
-6. Input transaksi penjualan.
-7. Input pembayaran.
-8. Lihat laporan ringkas.
+1. Login sebagai Pengguna.
+2. Lengkapi profil usaha.
+3. Cek dashboard visual, stok mentah, stok giling, dan data master jenis ikan.
+4. Tambah jenis ikan beserta gambar produk jika diperlukan.
+5. Input stok mentah masuk.
+6. Proses produksi giling dari stok mentah.
+7. Input transaksi penjualan.
+8. Lihat riwayat dan laporan dengan filter hari, minggu, atau bulan.
+9. Coba export/import Excel pada aplikasi desktop.
 
 ## E. Build APK dari GitHub
 

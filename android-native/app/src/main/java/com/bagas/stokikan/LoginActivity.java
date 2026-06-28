@@ -23,13 +23,17 @@ public class LoginActivity extends Activity {
         db.getWritableDatabase();
         username = findViewById(R.id.edtUsername);
         password = findViewById(R.id.edtPassword);
-        username.setText("admin");
-        password.setText("admin123");
+        username.setText("pengguna");
+        password.setText("pengguna123");
 
         findViewById(R.id.btnLogin).setOnClickListener(v -> login(username.getText().toString().trim(), password.getText().toString().trim()));
-        findViewById(R.id.btnAdmin).setOnClickListener(v -> login("admin", "admin123"));
-        findViewById(R.id.btnKasir).setOnClickListener(v -> login("kasir", "kasir123"));
-        findViewById(R.id.btnOperator).setOnClickListener(v -> login("operator", "operator123"));
+        findViewById(R.id.btnAdmin).setOnClickListener(v -> login("pengguna", "pengguna123"));
+        findViewById(R.id.btnKasir).setOnClickListener(v -> {
+            username.setText("pengguna");
+            password.setText("pengguna123");
+            Toast.makeText(this, "Akun demo pengguna sudah diisi.", Toast.LENGTH_SHORT).show();
+        });
+        findViewById(R.id.btnOperator).setOnClickListener(v -> Toast.makeText(this, "Daftar akun pengguna tersedia lengkap di aplikasi desktop JavaFX.", Toast.LENGTH_LONG).show());
     }
 
     private void login(String u, String p) {

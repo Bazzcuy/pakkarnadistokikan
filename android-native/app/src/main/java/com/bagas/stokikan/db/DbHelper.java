@@ -16,7 +16,7 @@ import java.util.List;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "stok_ikan_giling_android.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     public DbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -24,8 +24,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, status TEXT DEFAULT 'AKTIF')");
-        db.execSQL("CREATE TABLE jenis_ikan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT UNIQUE NOT NULL, kategori TEXT, deskripsi TEXT, aktif INTEGER DEFAULT 1)");
+        db.execSQL("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, nama_usaha TEXT, nomor_hp TEXT, alamat TEXT, status TEXT DEFAULT 'AKTIF')");
+        db.execSQL("CREATE TABLE jenis_ikan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT UNIQUE NOT NULL, kategori TEXT, deskripsi TEXT, gambar_path TEXT, aktif INTEGER DEFAULT 1)");
         db.execSQL("CREATE TABLE suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, nomor_hp TEXT, alamat TEXT, catatan TEXT)");
         db.execSQL("CREATE TABLE pelanggan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, nomor_hp TEXT, alamat TEXT, tipe_pelanggan TEXT)");
         db.execSQL("CREATE TABLE stok_mentah (id INTEGER PRIMARY KEY AUTOINCREMENT, jenis_ikan_id INTEGER UNIQUE NOT NULL, total_kg REAL NOT NULL DEFAULT 0, updated_at TEXT)");
@@ -57,9 +57,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     private void seed(SQLiteDatabase db) {
-        insertUser(db, "Administrator", "admin", "admin123", "ADMIN");
-        insertUser(db, "Kasir", "kasir", "kasir123", "KASIR");
-        insertUser(db, "Operator Produksi", "operator", "operator123", "OPERATOR");
+        insertUser(db, "Pengguna CATOKAN", "pengguna", "pengguna123", "PENGGUNA");
 
         String[] ikan = {"Tenggiri", "Gabus", "Kakap", "Patin", "Lele", "Belida", "Nila", "Tongkol"};
         for (String s : ikan) {
@@ -67,6 +65,7 @@ public class DbHelper extends SQLiteOpenHelper {
             cv.put("nama", s);
             cv.put("kategori", "Ikan");
             cv.put("deskripsi", "Jenis ikan " + s);
+            cv.put("gambar_path", "catokan_banner");
             long id = db.insert("jenis_ikan", null, cv);
             ContentValues stok = new ContentValues();
             stok.put("jenis_ikan_id", id);
@@ -293,6 +292,9 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("username", username);
         cv.put("password", PasswordUtil.sha256(password));
         cv.put("role", role);
+        cv.put("nama_usaha", "CATOKAN Ikan Giling");
+        cv.put("nomor_hp", "081271009999");
+        cv.put("alamat", "Palembang");
         db.insert("users", null, cv);
     }
 

@@ -14,7 +14,6 @@ import java.util.Locale;
 public class DashboardActivity extends Activity {
     private DbHelper db;
     private User user;
-    private String workspace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,7 +21,6 @@ public class DashboardActivity extends Activity {
         setContentView(R.layout.activity_dashboard);
         db = new DbHelper(this);
         user = AppNav.readUser(this);
-        workspace = defaultWorkspace();
         bindHeader();
         bindStats();
         bindMenus();
@@ -36,7 +34,8 @@ public class DashboardActivity extends Activity {
 
     private void bindHeader() {
         ((TextView) findViewById(R.id.txtGreeting)).setText("Halo, " + user.nama);
-        ((TextView) findViewById(R.id.txtRole)).setText("Role: " + user.role);
+        ((TextView) findViewById(R.id.txtRole)).setText("Login: Pengguna");
+        ((TextView) findViewById(R.id.txtWorkspace)).setText("Dashboard Pengguna");
     }
 
     private void bindStats() {
@@ -54,7 +53,12 @@ public class DashboardActivity extends Activity {
         View report = findViewById(R.id.btnReport);
 
         bindWorkspaceButtons();
-        applyWorkspace(rawInput, production, rawStock, gilingStock, sales, report);
+        rawInput.setVisibility(View.VISIBLE);
+        production.setVisibility(View.VISIBLE);
+        rawStock.setVisibility(View.VISIBLE);
+        gilingStock.setVisibility(View.VISIBLE);
+        sales.setVisibility(View.VISIBLE);
+        report.setVisibility(View.VISIBLE);
 
         rawInput.setOnClickListener(v -> AppNav.open(this, RawStockActivity.class, user));
         production.setOnClickListener(v -> AppNav.open(this, ProductionActivity.class, user));
@@ -75,42 +79,12 @@ public class DashboardActivity extends Activity {
         View admin = findViewById(R.id.btnWorkspaceAdmin);
         View production = findViewById(R.id.btnWorkspaceProduction);
         View cashier = findViewById(R.id.btnWorkspaceCashier);
-        admin.setVisibility(AppNav.allow(user, "ADMIN") ? View.VISIBLE : View.GONE);
-        production.setVisibility(AppNav.allow(user, "ADMIN", "OPERATOR") ? View.VISIBLE : View.GONE);
-        cashier.setVisibility(AppNav.allow(user, "ADMIN", "KASIR") ? View.VISIBLE : View.GONE);
-        admin.setOnClickListener(v -> setWorkspace("ADMIN"));
-        production.setOnClickListener(v -> setWorkspace("PRODUKSI"));
-        cashier.setOnClickListener(v -> setWorkspace("KASIR"));
-        updateWorkspaceLabel();
-    }
-
-    private void setWorkspace(String mode) {
-        workspace = mode;
-        applyWorkspace(findViewById(R.id.btnRawInput), findViewById(R.id.btnProduction), findViewById(R.id.btnRawStock), findViewById(R.id.btnGilingStock), findViewById(R.id.btnSales), findViewById(R.id.btnReport));
-        updateWorkspaceLabel();
-    }
-
-    private void applyWorkspace(View rawInput, View production, View rawStock, View gilingStock, View sales, View report) {
-        boolean admin = "ADMIN".equals(workspace);
-        boolean produksi = "PRODUKSI".equals(workspace);
-        boolean kasir = "KASIR".equals(workspace);
-        rawInput.setVisibility((admin || produksi) && AppNav.allow(user, "ADMIN", "OPERATOR") ? View.VISIBLE : View.GONE);
-        production.setVisibility((admin || produksi) && AppNav.allow(user, "ADMIN", "OPERATOR") ? View.VISIBLE : View.GONE);
-        rawStock.setVisibility(View.VISIBLE);
-        gilingStock.setVisibility(View.VISIBLE);
-        sales.setVisibility((admin || kasir) && AppNav.allow(user, "ADMIN", "KASIR") ? View.VISIBLE : View.GONE);
-        report.setVisibility((admin || kasir) ? View.VISIBLE : View.GONE);
-    }
-
-    private String defaultWorkspace() {
-        if (AppNav.allow(user, "KASIR") && !AppNav.allow(user, "ADMIN")) return "KASIR";
-        if (AppNav.allow(user, "OPERATOR") && !AppNav.allow(user, "ADMIN")) return "PRODUKSI";
-        return "ADMIN";
-    }
-
-    private void updateWorkspaceLabel() {
-        String text = "ADMIN".equals(workspace) ? "Dashboard Admin" : "PRODUKSI".equals(workspace) ? "Dashboard Produksi" : "Dashboard Kasir";
-        ((TextView) findViewById(R.id.txtWorkspace)).setText(text);
+        admin.setVisibility(View.VISIBLE);
+        production.setVisibility(View.VISIBLE);
+        cashier.setVisibility(View.VISIBLE);
+        admin.setOnClickListener(v -> AppNav.open(this, RawStockActivity.class, user));
+        production.setOnClickListener(v -> AppNav.open(this, ProductionActivity.class, user));
+        cashier.setOnClickListener(v -> AppNav.open(this, SalesActivity.class, user));
     }
 
     private void openText(String title, String mode) {

@@ -21,7 +21,7 @@ public class AppNav {
         String role = i.getStringExtra("role");
         if (nama == null) nama = "Pengguna";
         if (username == null) username = "user";
-        if (role == null) role = "ADMIN";
+        if (role == null) role = "PENGGUNA";
         return new User(id, nama, username, role);
     }
 
@@ -33,6 +33,7 @@ public class AppNav {
 
     public static boolean allow(User user, String... roles) {
         if (user == null || user.role == null) return false;
+        if ("PENGGUNA".equalsIgnoreCase(user.role)) return true;
         for (String role : roles) if (role.equalsIgnoreCase(user.role)) return true;
         return false;
     }
