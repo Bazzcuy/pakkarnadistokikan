@@ -7,6 +7,7 @@ import com.bagas.stokikan.service.*;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -81,9 +82,9 @@ public class MainApp extends Application {
             if (currentUser == null) alert("Login gagal", "Username atau password salah.");
             else stage.setScene(appScene(stage));
         });
-        TextArea demo = area("AKUN DEMO\n\npengguna / pengguna123");
-        demo.setPrefRowCount(3);
-        return form(title("Masuk Pengguna"), sub("Gunakan akun demo atau daftar akun baru."), demo, new Label("Username"), username, new Label("Password"), password, login);
+        TextArea akun = area("AKUN AWAL\n\npengguna / pengguna123");
+        akun.setPrefRowCount(3);
+        return form(title("Masuk Pengguna"), sub("Gunakan akun awal atau daftar akun baru."), akun, new Label("Username"), username, new Label("Password"), password, login);
     }
 
     private VBox registerForm(Stage stage) {
@@ -121,9 +122,9 @@ public class MainApp extends Application {
         HBox brand = new HBox(10, image("/images/catokan_logo.png", 48, 48), vbox(title("CATOKAN"), sub(currentUser.getNama()), akun));
         brand.setAlignment(Pos.CENTER_LEFT);
         Button dashboard = nav("Dashboard", () -> setCenter(dashboardView()));
-        Button jenis = nav("Jenis Ikan", () -> setCenter(fishMasterView(stage)));
-        Button supplier = nav("Supplier", () -> setCenter(supplierView()));
-        Button pelanggan = nav("Pelanggan", () -> setCenter(customerView()));
+        Button jenis = nav("Kelola Jenis Ikan", () -> setCenter(fishMasterView(stage)));
+        Button supplier = nav("Data Supplier", () -> setCenter(supplierView()));
+        Button pelanggan = nav("Data Pelanggan", () -> setCenter(customerView()));
         Button stokMentah = nav("Stok Mentah", () -> setCenter(rawStockView(stage)));
         Button produksi = nav("Produksi Giling", () -> setCenter(productionView()));
         Button stokGiling = nav("Stok Giling", () -> setCenter(milledStockView()));
@@ -375,7 +376,7 @@ public class MainApp extends Application {
         ComboBox<String> periode = new ComboBox<>(FXCollections.observableArrayList("Semua", "Hari Ini", "Minggu Ini", "Bulan Ini"));
         periode.getSelectionModel().selectFirst();
         ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
-        Button export = primary("Export Laporan Excel");
+        Button export = primary("Export Laporan");
         export.setOnAction(e -> {
             File file = saveExcel(stage, "laporan-catokan.xlsx");
             if (file == null) return;
@@ -386,14 +387,37 @@ public class MainApp extends Application {
                 alert("Gagal", ex.getMessage());
             }
         });
-        Button template = secondary("Template Import Excel");
+        Button backup = secondary("Export Data Aplikasi");
+        backup.setOnAction(e -> {
+            File file = saveExcel(stage, "data-catokan.xlsx");
+            if (file == null) return;
+            try {
+                excelService.exportBackup(file.toPath());
+                alert("Berhasil", "Data aplikasi berhasil diexport:\n" + file.getAbsolutePath());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        Button restore = secondary("Import Data Aplikasi");
+        restore.setOnAction(e -> {
+            File file = openExcel(stage);
+            if (file == null) return;
+            try {
+                int rows = excelService.importBackup(file.toPath());
+                alert("Berhasil", rows + " baris data aplikasi berhasil diimport.");
+                setCenter(dashboardView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        Button template = secondary("Template Stok Excel");
         template.setOnAction(e -> {
             File file = saveExcel(stage, "template-import-stok.xlsx");
             if (file == null) return;
             excelService.exportStockImportTemplate(file.toPath());
             alert("Berhasil", "Template dibuat.");
         });
-        Button importExcel = secondary("Import Stok Excel");
+        Button importExcel = secondary("Import Stok Masuk");
         importExcel.setOnAction(e -> {
             File file = openExcel(stage);
             if (file == null) return;
@@ -401,7 +425,7 @@ public class MainApp extends Application {
             alert("Berhasil", rows + " baris stok masuk diimport.");
             setCenter(reportView(stage));
         });
-        VBox box = page("Laporan Ringkas", sub("Laporan bisa dilihat semua, harian, mingguan, bulanan, dan per jenis ikan."), new HBox(10, new Label("Periode"), periode, new Label("Jenis"), jenis, export, template, importExcel));
+        VBox box = page("Laporan Ringkas", sub("Laporan bisa dilihat semua, harian, mingguan, bulanan, dan per jenis ikan."), new HBox(10, new Label("Periode"), periode, new Label("Jenis"), jenis, export, backup, restore, template, importExcel));
         Runnable refresh = () -> {
             box.getChildren().removeIf(n -> n instanceof TableView || (n instanceof HBox h && h.getStyleClass().contains("stats-row")));
             String salesWhere = salesFilterSql(periode.getValue(), jenis.getValue());
@@ -563,7 +587,17 @@ public class MainApp extends Application {
     }
 
     private ComboBox<OptionItem> combo(List<OptionItem> items) {
-        ComboBox<OptionItem> c = new ComboBox<>(FXCollections.observableArrayList(items));
+        FilteredList<OptionItem> filtered = new FilteredList<>(FXCollections.observableArrayList(items), item -> true);
+        ComboBox<OptionItem> c = new ComboBox<>(filtered);
+        c.setEditable(true);
+        c.getEditor().setPromptText("Ketik untuk mencari...");
+        c.getEditor().textProperty().addListener((obs, old, text) -> {
+            OptionItem selected = c.getSelectionModel().getSelectedItem();
+            if (selected != null && selected.toString().equals(text)) return;
+            String key = text == null ? "" : text.toLowerCase();
+            filtered.setPredicate(item -> key.isBlank() || item.getLabel().toLowerCase().contains(key));
+            if (!c.isShowing()) c.show();
+        });
         if (!items.isEmpty()) c.getSelectionModel().selectFirst();
         c.setMaxWidth(Double.MAX_VALUE);
         return c;

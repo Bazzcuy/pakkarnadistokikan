@@ -43,12 +43,12 @@ public class FishMasterActivity extends Activity {
         LinearLayout form = card();
         root.addView(form);
         title(form, "Jenis Ikan");
-        subtitle(form, "Tambah master jenis ikan, kategori, deskripsi, dan gambar produk.");
+        subtitle(form, "Tambah data jenis ikan, kategori, deskripsi, dan gambar produk.");
         preview = new ImageView(this);
         preview.setImageResource(R.drawable.catokan_banner);
         preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
         form.addView(preview, new LinearLayout.LayoutParams(-1, dp(145)));
-        nama = input(form, "Nama Jenis Ikan", "Contoh: Tenggiri Super");
+        nama = input(form, "Nama Jenis Ikan", "Masukkan Tenggiri Super");
         kategori = input(form, "Kategori", "Ikan");
         deskripsi = input(form, "Deskripsi", "Keterangan kualitas atau asal ikan");
         Button pick = button("Pilih Gambar Ikan", false);

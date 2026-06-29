@@ -8,11 +8,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.List;
 import java.util.Map;
 
 public class ExcelService {
     private final StockService stockService = new StockService();
+    private static final List<String> BACKUP_TABLES = List.of(
+            "users", "jenis_ikan", "suppliers", "pelanggan", "stok_mentah", "stok_giling",
+            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "riwayat_stok"
+    );
 
     public void exportReport(Path file) {
         try (Workbook wb = new XSSFWorkbook()) {
@@ -47,12 +55,6 @@ public class ExcelService {
                 cell.setCellStyle(header);
                 input.setColumnWidth(i, 22 * 256);
             }
-            Row example = input.createRow(1);
-            example.createCell(0).setCellValue("Tenggiri");
-            example.createCell(1).setCellValue("Supplier Ikan Segar Palembang");
-            example.createCell(2).setCellValue(10.5);
-            example.createCell(3).setCellValue(62000);
-            example.createCell(4).setCellValue("Contoh import stok masuk");
             writeTable(wb, "Referensi Jenis", header, Database.query("SELECT nama FROM jenis_ikan WHERE aktif=1 ORDER BY nama"));
             writeTable(wb, "Referensi Supplier", header, Database.query("SELECT nama FROM suppliers ORDER BY nama"));
             save(wb, file);
@@ -82,6 +84,34 @@ public class ExcelService {
             return count;
         } catch (Exception e) {
             throw new RuntimeException("Gagal import stok dari Excel: " + e.getMessage(), e);
+        }
+    }
+
+    public void exportBackup(Path file) {
+        try (Workbook wb = new XSSFWorkbook()) {
+            CellStyle header = headerStyle(wb);
+            for (String table : BACKUP_TABLES) writeBackupTable(wb, table, header);
+            save(wb, file);
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal export data aplikasi: " + e.getMessage(), e);
+        }
+    }
+
+    public int importBackup(Path file) {
+        try (InputStream in = Files.newInputStream(file); Workbook wb = WorkbookFactory.create(in); Connection c = Database.connect()) {
+            c.setAutoCommit(false);
+            try {
+                int rows = 0;
+                for (int i = BACKUP_TABLES.size() - 1; i >= 0; i--) Database.execute(c, "DELETE FROM " + BACKUP_TABLES.get(i));
+                for (String table : BACKUP_TABLES) rows += importBackupTable(c, wb, table);
+                c.commit();
+                return rows;
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal import data aplikasi: " + e.getMessage(), e);
         }
     }
 
@@ -132,6 +162,69 @@ public class ExcelService {
                 else row.createCell(c).setCellValue(value == null ? "" : String.valueOf(value));
             }
         }
+    }
+
+    private void writeBackupTable(Workbook wb, String table, CellStyle header) throws Exception {
+        Sheet sheet = wb.createSheet(table);
+        try (Connection c = Database.connect();
+             PreparedStatement ps = c.prepareStatement("SELECT * FROM " + table);
+             ResultSet rs = ps.executeQuery()) {
+            ResultSetMetaData md = rs.getMetaData();
+            Row h = sheet.createRow(0);
+            for (int i = 1; i <= md.getColumnCount(); i++) {
+                Cell cell = h.createCell(i - 1);
+                cell.setCellValue(md.getColumnName(i));
+                cell.setCellStyle(header);
+                sheet.setColumnWidth(i - 1, 20 * 256);
+            }
+            int rowIndex = 1;
+            while (rs.next()) {
+                Row row = sheet.createRow(rowIndex++);
+                for (int i = 1; i <= md.getColumnCount(); i++) {
+                    Object value = rs.getObject(i);
+                    if (value instanceof Number number) row.createCell(i - 1).setCellValue(number.doubleValue());
+                    else row.createCell(i - 1).setCellValue(value == null ? "" : String.valueOf(value));
+                }
+            }
+        }
+    }
+
+    private int importBackupTable(Connection c, Workbook wb, String table) throws Exception {
+        Sheet sheet = wb.getSheet(table);
+        if (sheet == null) throw new IllegalArgumentException("Sheet backup tidak lengkap: " + table);
+        Row header = sheet.getRow(0);
+        if (header == null) return 0;
+        int cols = header.getLastCellNum();
+        StringBuilder sql = new StringBuilder("INSERT INTO ").append(table).append("(");
+        StringBuilder marks = new StringBuilder();
+        for (int i = 0; i < cols; i++) {
+            if (i > 0) {
+                sql.append(",");
+                marks.append(",");
+            }
+            sql.append(text(header.getCell(i)));
+            marks.append("?");
+        }
+        sql.append(") VALUES(").append(marks).append(")");
+        int count = 0;
+        try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+                Row row = sheet.getRow(r);
+                if (row == null) continue;
+                boolean empty = true;
+                for (int col = 0; col < cols; col++) if (!text(row.getCell(col)).isBlank()) empty = false;
+                if (empty) continue;
+                for (int col = 0; col < cols; col++) {
+                    Cell cell = row.getCell(col);
+                    if (cell == null || text(cell).isBlank()) ps.setObject(col + 1, null);
+                    else if (cell.getCellType() == CellType.NUMERIC) ps.setDouble(col + 1, cell.getNumericCellValue());
+                    else ps.setString(col + 1, text(cell));
+                }
+                ps.executeUpdate();
+                count++;
+            }
+        }
+        return count;
     }
 
     private CellStyle headerStyle(Workbook wb) {

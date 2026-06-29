@@ -20,4 +20,4 @@ File APK berada di dalam artifact:
 app-debug.apk
 ```
 
-APK ini cocok untuk demo dan pengujian. Untuk rilis publik di Play Store, perlu signing key release sendiri.
+APK ini cocok untuk presentasi dan pengujian. Untuk rilis publik di Play Store, perlu signing key release sendiri.

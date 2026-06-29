@@ -31,7 +31,7 @@ public class LoginActivity extends Activity {
         findViewById(R.id.btnKasir).setOnClickListener(v -> {
             username.setText("pengguna");
             password.setText("pengguna123");
-            Toast.makeText(this, "Akun demo pengguna sudah diisi.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Akun awal pengguna sudah diisi.", Toast.LENGTH_SHORT).show();
         });
         findViewById(R.id.btnOperator).setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
     }

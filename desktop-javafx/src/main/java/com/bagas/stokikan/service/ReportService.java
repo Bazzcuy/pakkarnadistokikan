@@ -14,7 +14,7 @@ public class ReportService {
                 String.format("%-26s : %s kg\n", "Total stok giling", totalGiling) +
                 String.format("%-26s : Rp %s\n", "Total nilai penjualan", totalJual) +
                 String.format("%-26s : Rp %s\n\n", "Sisa belum lunas", piutang) +
-                "Akun demo pengguna: pengguna/pengguna123";
+                "Akun awal pengguna: pengguna/pengguna123";
     }
 
     public String laporanRingkas() {

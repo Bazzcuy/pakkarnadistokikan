@@ -39,13 +39,13 @@ public class RegisterActivity extends Activity {
         root.addView(card);
         title(card, "Daftar Pengguna");
         subtitle(card, "Buat akun pengguna CATOKAN. Setelah daftar, kamu langsung masuk ke dashboard.");
-        nama = input(card, "Nama Pengguna", "Contoh: Bagas");
-        username = input(card, "Username", "Contoh: penggunabaru");
+        nama = input(card, "Nama Pengguna", "Masukkan Bagas");
+        username = input(card, "Username", "Masukkan penggunabaru");
         password = input(card, "Password", "Minimal 6 karakter");
         password.setInputType(0x00000081);
-        usaha = input(card, "Nama Usaha", "Contoh: CATOKAN Ikan Giling");
-        hp = input(card, "Nomor HP", "Contoh: 0812...");
-        alamat = input(card, "Alamat", "Contoh: Palembang");
+        usaha = input(card, "Nama Usaha", "Masukkan CATOKAN Ikan Giling");
+        hp = input(card, "Nomor HP", "Masukkan 0812...");
+        alamat = input(card, "Alamat", "Masukkan Palembang");
 
         Button save = button("Daftar dan Masuk", true);
         save.setOnClickListener(v -> register());

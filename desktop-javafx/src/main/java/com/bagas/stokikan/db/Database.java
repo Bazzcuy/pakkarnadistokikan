@@ -119,16 +119,16 @@ public class Database {
             }
         }
         if (isEmpty(c, "stok_giling")) {
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 1, "BG-DEMO-001", 12.5, 95000.0, "2026-06-20");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 2, "BG-DEMO-002", 10.0, 80000.0, "2026-06-20");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 3, "BG-DEMO-003", 15.0, 72000.0, "2026-06-21");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 4, "BG-DEMO-004", 18.0, 56000.0, "2026-06-22");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 6, "BG-DEMO-005", 8.0, 110000.0, "2026-06-23");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 1, "BG-DEMO-006", 22.0, 98000.0, "2026-06-24");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 7, "BG-DEMO-007", 14.0, 52000.0, "2026-06-25");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 8, "BG-DEMO-008", 16.0, 60000.0, "2026-06-25");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 5, "BG-DEMO-009", 13.0, 42000.0, "2026-06-26");
-            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 3, "BG-DEMO-010", 9.0, 74000.0, "2026-06-26");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 1, "BG-202606-001", 12.5, 95000.0, "2026-06-20");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 2, "BG-202606-002", 10.0, 80000.0, "2026-06-20");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 3, "BG-202606-003", 15.0, 72000.0, "2026-06-21");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 4, "BG-202606-004", 18.0, 56000.0, "2026-06-22");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 6, "BG-202606-005", 8.0, 110000.0, "2026-06-23");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 1, "BG-202606-006", 22.0, 98000.0, "2026-06-24");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 7, "BG-202606-007", 14.0, 52000.0, "2026-06-25");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 8, "BG-202606-008", 16.0, 60000.0, "2026-06-25");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 5, "BG-202606-009", 13.0, 42000.0, "2026-06-26");
+            execute(c, "INSERT INTO stok_giling(jenis_ikan_id,batch_no,total_kg,harga_jual_per_kg,tanggal_produksi) VALUES(?,?,?,?,?)", 3, "BG-202606-010", 9.0, 74000.0, "2026-06-26");
         }
         if (isEmpty(c, "stok_masuk")) {
             execute(c, "INSERT INTO stok_masuk(tanggal,jenis_ikan_id,supplier_id,berat_kg,harga_beli_per_kg,total_beli,catatan) VALUES(?,?,?,?,?,?,?)", "2026-06-18", 1, 1, 45.0, 62000.0, 2790000.0, "Pasokan awal tenggiri");
@@ -141,30 +141,30 @@ public class Database {
             execute(c, "INSERT INTO stok_masuk(tanggal,jenis_ikan_id,supplier_id,berat_kg,harga_beli_per_kg,total_beli,catatan) VALUES(?,?,?,?,?,?,?)", "2026-06-26", 3, 6, 24.0, 45000.0, 1080000.0, "Kakap tambahan");
         }
         if (isEmpty(c, "produksi_giling")) {
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-001", "2026-06-20", 1, 15.0, 12.5, 2.5, 85000.0, 95000.0, "Produksi demo tenggiri");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-002", "2026-06-20", 2, 12.0, 10.0, 2.0, 65000.0, 80000.0, "Produksi demo gabus");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-003", "2026-06-21", 3, 18.0, 15.0, 3.0, 75000.0, 72000.0, "Produksi demo kakap");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-004", "2026-06-22", 4, 22.0, 18.0, 4.0, 70000.0, 56000.0, "Produksi demo patin");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-005", "2026-06-23", 6, 10.0, 8.0, 2.0, 90000.0, 110000.0, "Produksi demo belida");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-006", "2026-06-24", 1, 26.0, 22.0, 4.0, 120000.0, 98000.0, "Produksi tenggiri batch besar");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-007", "2026-06-25", 7, 17.0, 14.0, 3.0, 60000.0, 52000.0, "Produksi nila ekonomis");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-008", "2026-06-25", 8, 20.0, 16.0, 4.0, 65000.0, 60000.0, "Produksi tongkol");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-009", "2026-06-26", 5, 16.0, 13.0, 3.0, 50000.0, 42000.0, "Produksi lele");
-            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-DEMO-010", "2026-06-26", 3, 11.0, 9.0, 2.0, 52000.0, 74000.0, "Produksi kakap tambahan");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-001", "2026-06-20", 1, 15.0, 12.5, 2.5, 85000.0, 95000.0, "Produksi tenggiri");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-002", "2026-06-20", 2, 12.0, 10.0, 2.0, 65000.0, 80000.0, "Produksi gabus");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-003", "2026-06-21", 3, 18.0, 15.0, 3.0, 75000.0, 72000.0, "Produksi kakap");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-004", "2026-06-22", 4, 22.0, 18.0, 4.0, 70000.0, 56000.0, "Produksi patin");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-005", "2026-06-23", 6, 10.0, 8.0, 2.0, 90000.0, 110000.0, "Produksi belida");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-006", "2026-06-24", 1, 26.0, 22.0, 4.0, 120000.0, 98000.0, "Produksi tenggiri batch besar");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-007", "2026-06-25", 7, 17.0, 14.0, 3.0, 60000.0, 52000.0, "Produksi nila ekonomis");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-008", "2026-06-25", 8, 20.0, 16.0, 4.0, 65000.0, 60000.0, "Produksi tongkol");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-009", "2026-06-26", 5, 16.0, 13.0, 3.0, 50000.0, 42000.0, "Produksi lele");
+            execute(c, "INSERT INTO produksi_giling(batch_no,tanggal,jenis_ikan_id,berat_mentah_kg,berat_hasil_kg,penyusutan_kg,biaya_produksi,harga_jual_per_kg,catatan) VALUES(?,?,?,?,?,?,?,?,?)", "BG-202606-010", "2026-06-26", 3, 11.0, 9.0, 2.0, 52000.0, 74000.0, "Produksi kakap tambahan");
         }
         if (isEmpty(c, "penjualan")) {
-            seedSale(c, "TRX-DEMO-001", "2026-06-24", 1, 2, 1, 2.0, 190000.0, "Tunai");
-            seedSale(c, "TRX-DEMO-002", "2026-06-24", 2, 2, 3, 4.5, 200000.0, "Transfer");
-            seedSale(c, "TRX-DEMO-003", "2026-06-25", 4, 2, 4, 6.0, 336000.0, "Tunai");
-            seedSale(c, "TRX-DEMO-004", "2026-06-25", 6, 2, 6, 7.0, 686000.0, "Transfer");
-            seedSale(c, "TRX-DEMO-005", "2026-06-26", 8, 2, 5, 1.5, 0.0, "Tempo");
-            seedSale(c, "TRX-DEMO-006", "2026-06-26", 9, 2, 2, 3.0, 240000.0, "Tunai");
-            seedSale(c, "TRX-DEMO-007", "2026-06-26", 10, 2, 7, 4.0, 208000.0, "Transfer");
-            seedSale(c, "TRX-DEMO-008", "2026-06-27", 11, 2, 8, 5.0, 300000.0, "Tunai");
-            seedSale(c, "TRX-DEMO-009", "2026-06-27", 12, 2, 9, 2.5, 50000.0, "Tempo");
-            seedSale(c, "TRX-DEMO-010", "2026-06-27", 3, 2, 10, 2.0, 148000.0, "Transfer");
-            seedSale(c, "TRX-DEMO-011", "2026-06-28", 5, 2, 1, 4.0, 380000.0, "Tunai");
-            seedSale(c, "TRX-DEMO-012", "2026-06-28", 7, 2, 6, 3.0, 200000.0, "Transfer");
+            seedSale(c, "TRX-202606-001", "2026-06-24", 1, 2, 1, 2.0, 190000.0, "Tunai");
+            seedSale(c, "TRX-202606-002", "2026-06-24", 2, 2, 3, 4.5, 200000.0, "Transfer");
+            seedSale(c, "TRX-202606-003", "2026-06-25", 4, 2, 4, 6.0, 336000.0, "Tunai");
+            seedSale(c, "TRX-202606-004", "2026-06-25", 6, 2, 6, 7.0, 686000.0, "Transfer");
+            seedSale(c, "TRX-202606-005", "2026-06-26", 8, 2, 5, 1.5, 0.0, "Tempo");
+            seedSale(c, "TRX-202606-006", "2026-06-26", 9, 2, 2, 3.0, 240000.0, "Tunai");
+            seedSale(c, "TRX-202606-007", "2026-06-26", 10, 2, 7, 4.0, 208000.0, "Transfer");
+            seedSale(c, "TRX-202606-008", "2026-06-27", 11, 2, 8, 5.0, 300000.0, "Tunai");
+            seedSale(c, "TRX-202606-009", "2026-06-27", 12, 2, 9, 2.5, 50000.0, "Tempo");
+            seedSale(c, "TRX-202606-010", "2026-06-27", 3, 2, 10, 2.0, 148000.0, "Transfer");
+            seedSale(c, "TRX-202606-011", "2026-06-28", 5, 2, 1, 4.0, 380000.0, "Tunai");
+            seedSale(c, "TRX-202606-012", "2026-06-28", 7, 2, 6, 3.0, 200000.0, "Transfer");
         }
     }
 
@@ -177,10 +177,10 @@ public class Database {
         String status = sisa <= 0 ? "LUNAS" : "BELUM_LUNAS";
         int penjualanId = insertAndGetId(c, "INSERT INTO penjualan(nomor_transaksi,tanggal,pelanggan_id,kasir_id,subtotal,diskon,total,status_pembayaran) VALUES(?,?,?,?,?,?,?,?)", nomor, tanggal, pelangganId, kasirId, total, 0, total, status);
         insertAndGetId(c, "INSERT INTO detail_penjualan(penjualan_id,stok_giling_id,jenis_ikan_id,jumlah_kg,harga_per_kg,subtotal) VALUES(?,?,?,?,?,?)", penjualanId, stokGilingId, jenisId, kg, harga, total);
-        insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", penjualanId, tanggal, metode, bayar, sisa, status, "Data dummy simulasi transaksi");
+        insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", penjualanId, tanggal, metode, bayar, sisa, status, "Pembayaran transaksi penjualan");
         double after = stok - kg;
         execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", after, after <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
-        execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", tanggal + " 10:00:00", jenisId, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan dummy simulasi");
+        execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", tanggal + " 10:00:00", jenisId, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan ikan giling");
     }
 
     public static void execute(Connection c, String sql, Object... params) throws SQLException {

@@ -3,7 +3,7 @@
 CATOKAN adalah aplikasi PBO Java untuk pencatatan stok ikan giling. Project sengaja dipisah menjadi dua target:
 
 - `desktop-javafx`: aplikasi desktop JavaFX + SQLite lokal untuk presentasi PBO.
-- `android-native`: aplikasi Android Java native + SQLite lokal untuk demo mobile/offline.
+- `android-native`: aplikasi Android Java native + SQLite lokal untuk presentasi mobile/offline.
 
 Keduanya tidak saling terhubung jaringan karena rancangan sistem memakai database lokal masing-masing.
 
@@ -13,7 +13,7 @@ Struktur kode sudah dipisah sesuai tanggung jawab:
 
 - `model`: representasi object sederhana seperti `User` dan `OptionItem`.
 - `service`: logika bisnis, validasi, transaksi stok, produksi, penjualan, pembayaran, dan laporan.
-- `db`: helper database SQLite, pembuatan tabel, dan seed dummy.
+- `db`: helper database SQLite, pembuatan tabel, dan seed awal.
 - `util`: helper tanggal dan hashing password.
 - UI: JavaFX untuk desktop, Activity XML untuk Android.
 
@@ -36,7 +36,7 @@ Alur utama sudah dijaga:
 - Produksi ditolak jika stok mentah tidak cukup.
 - Penjualan ditolak jika stok giling tidak cukup.
 - Pembayaran tidak boleh negatif dan tidak boleh melebihi total/sisa tagihan.
-- Sistem memakai satu login pengguna agar alur demo dan operasional tidak terpecah ke banyak role.
+- Sistem memakai satu login pengguna agar alur presentasi dan operasional tidak terpecah ke banyak role.
 - Setelah login, semua fitur utama tersedia dalam satu dashboard pengguna dengan navigasi terpisah per aktivitas.
 
 ## Database
@@ -58,23 +58,23 @@ SQLite memakai tabel utama:
 
 Desktop juga memiliki `penyesuaian_stok` untuk pengembangan lanjutan.
 
-## Keamanan Demo
+## Keamanan presentasi
 
-Password demo tetap mudah dipakai untuk presentasi, tetapi database baru menyimpan password dalam bentuk hash SHA-256. Login masih kompatibel dengan database lama yang mungkin sudah berisi password plaintext agar tidak merusak demo sebelumnya.
+Password akun awal tetap mudah dipakai untuk presentasi, tetapi database baru menyimpan password dalam bentuk hash SHA-256. Login masih kompatibel dengan database lama yang mungkin sudah berisi password plaintext agar tidak merusak presentasi sebelumnya.
 
-## Data Dummy
+## data awal
 
-Data dummy sudah diperbanyak:
+data awal sudah diperbanyak:
 
 - 8 jenis ikan.
-- Gambar produk ikan pada master jenis ikan.
+- Gambar produk ikan pada Data kelola jenis ikan.
 - 10 supplier.
 - 12 pelanggan.
 - Stok mentah bervariasi.
 - 10 batch ikan giling.
 - Data stok masuk, produksi, penjualan, pembayaran lunas, pembayaran tempo, dan riwayat stok.
 
-Detail ada di `docs/DATA_DUMMY.md`.
+Detail ada di `docs/DATA_awal.md`.
 
 ## Android
 

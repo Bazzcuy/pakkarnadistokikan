@@ -11,9 +11,9 @@ Project ini dibuat sesuai laporan final **Rancang Bangun Aplikasi Pengelolaan St
    Aplikasi Android Native Java + SQLiteOpenHelper untuk penggunaan HP/offline.
 
 3. `docs/`  
-   Skema database, akun demo, dan panduan menjalankan project.
+   Skema database, Akun Awal, dan panduan menjalankan project.
 
-## Akun Demo
+## Akun Awal
 
 | Login | Username | Password |
 |---|---|---|
@@ -24,8 +24,8 @@ Project ini dibuat sesuai laporan final **Rancang Bangun Aplikasi Pengelolaan St
 - Register dan login satu role pengguna
 - Profil pengguna/usaha
 - Dashboard visual stok mentah, stok giling, penjualan, dan laporan
-- Master jenis ikan lengkap dengan gambar produk
-- Master supplier dan pelanggan
+- Data kelola jenis ikan lengkap dengan gambar produk
+- Data supplier dan pelanggan
 - Input stok ikan mentah masuk
 - Proses produksi ikan giling
 - Stok ikan giling per batch
@@ -70,9 +70,9 @@ Aplikasi Android dan Desktop sengaja dibuat **tidak saling terhubung**, sesuai r
 - Audit struktur final ada di `docs/CODE_AUDIT_FINAL.md`.
 
 ## Finalisasi Sistem
-- Data dummy diperbanyak agar terlihat seperti simulasi usaha kecil yang berjalan.
+- data awal diperbanyak agar terlihat seperti simulasi usaha kecil yang berjalan.
 - Setelah login, semua fitur utama tersedia dalam satu dashboard pengguna agar aktivitas lebih ringkas dan tidak bercampur role.
-- Password demo disimpan dalam bentuk hash SHA-256 pada database baru.
+- Password akun awal disimpan dalam bentuk hash SHA-256 pada database baru.
 - Logika stok, produksi, penjualan, pembayaran, dan riwayat stok dibuat transactional.
 - Android siap dipush ke GitHub dan menghasilkan APK debug lewat workflow Actions.
 - Desktop mendukung export laporan Excel, template import Excel, dan import stok masuk dari Excel.

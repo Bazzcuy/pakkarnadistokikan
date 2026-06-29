@@ -38,7 +38,7 @@ public class ProfileActivity extends Activity {
         LinearLayout card = card();
         root.addView(card);
         title(card, "Profil Pengguna");
-        subtitle(card, "Data ini dipakai untuk identitas usaha saat demo dan laporan.");
+        subtitle(card, "Data ini dipakai untuk identitas usaha pada laporan.");
         nama = input(card, "Nama Pengguna", "Nama lengkap");
         usaha = input(card, "Nama Usaha", "Nama usaha");
         hp = input(card, "Nomor HP", "Nomor aktif");

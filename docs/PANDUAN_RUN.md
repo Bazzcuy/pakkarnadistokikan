@@ -40,11 +40,11 @@ Database SQLite Android dibuat otomatis oleh `DbHelper` saat aplikasi pertama di
 - Pengguna: `pengguna / pengguna123`
 - Pengguna baru juga bisa dibuat lewat tab **Daftar** pada aplikasi desktop.
 
-## D. Alur Demo Singkat
+## D. Alur presentasi Singkat
 
 1. Login sebagai Pengguna.
 2. Lengkapi profil usaha.
-3. Cek dashboard visual, stok mentah, stok giling, dan data master jenis ikan.
+3. Cek dashboard visual, stok mentah, stok giling, dan data Data kelola jenis ikan.
 4. Tambah jenis ikan beserta gambar produk jika diperlukan.
 5. Input stok mentah masuk.
 6. Proses produksi giling dari stok mentah.

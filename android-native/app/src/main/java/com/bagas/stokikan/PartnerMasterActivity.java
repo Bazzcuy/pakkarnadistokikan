@@ -40,7 +40,7 @@ public class PartnerMasterActivity extends Activity {
 
         LinearLayout form = card();
         root.addView(form);
-        title(form, supplierMode ? "Master Supplier" : "Master Pelanggan");
+        title(form, supplierMode ? "Data Supplier" : "Data Pelanggan");
         subtitle(form, supplierMode ? "Supplier dipakai saat input stok ikan mentah masuk." : "Pelanggan dipakai saat transaksi penjualan.");
         id = input(form, "ID", "");
         id.setEnabled(false);

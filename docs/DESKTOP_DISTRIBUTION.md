@@ -21,7 +21,7 @@ Database akan dibuat otomatis:
 desktop-javafx/stok_ikan_giling_desktop.db
 ```
 
-Jika ingin mengulang dari data dummy awal, tutup aplikasi lalu hapus file database tersebut. Saat aplikasi dibuka lagi, sistem akan membuat database dan dummy data baru.
+Jika ingin mengulang dari data awal awal, tutup aplikasi lalu hapus file database tersebut. Saat aplikasi dibuka lagi, sistem akan membuat database dan data awal baru.
 
 ## Opsi 2 - Jadikan installer Windows
 

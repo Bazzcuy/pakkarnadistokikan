@@ -4,7 +4,7 @@ Versi ini sudah dipoles lebih serius untuk kebutuhan presentasi PBO.
 
 ## Android
 - Splash screen khusus CATOKAN.
-- Login screen dengan banner, logo, card, dan tombol demo cepat.
+- Login screen dengan banner, logo, card, dan tombol presentasi cepat.
 - Dashboard memakai quick stats: stok mentah, stok giling, dan total penjualan.
 - Menu disusun sebagai satu dashboard pengguna agar stok, produksi, penjualan, dan laporan mudah dicari.
 - Form input stok, produksi, dan penjualan dipisah ke Activity sendiri.
