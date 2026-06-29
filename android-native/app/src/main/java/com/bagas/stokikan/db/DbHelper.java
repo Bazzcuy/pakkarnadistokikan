@@ -374,6 +374,42 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void simpanSupplier(Integer id, String nama, String hp, String alamat, String catatan) {
+        if (blank(nama)) throw new IllegalArgumentException("Nama supplier wajib diisi.");
+        ContentValues cv = new ContentValues();
+        cv.put("nama", nama.trim());
+        cv.put("nomor_hp", text(hp));
+        cv.put("alamat", text(alamat));
+        cv.put("catatan", text(catatan));
+        if (id == null) getWritableDatabase().insert("suppliers", null, cv);
+        else getWritableDatabase().update("suppliers", cv, "id=?", new String[]{String.valueOf(id)});
+    }
+
+    public void hapusSupplier(int id) {
+        if (scalar("SELECT COUNT(*) FROM stok_masuk WHERE supplier_id=?", String.valueOf(id)) > 0) {
+            throw new IllegalArgumentException("Supplier sudah dipakai pada stok masuk, tidak bisa dihapus.");
+        }
+        getWritableDatabase().delete("suppliers", "id=?", new String[]{String.valueOf(id)});
+    }
+
+    public void simpanPelanggan(Integer id, String nama, String hp, String alamat, String tipe) {
+        if (blank(nama)) throw new IllegalArgumentException("Nama pelanggan wajib diisi.");
+        ContentValues cv = new ContentValues();
+        cv.put("nama", nama.trim());
+        cv.put("nomor_hp", text(hp));
+        cv.put("alamat", text(alamat));
+        cv.put("tipe_pelanggan", blank(tipe) ? "Retail" : tipe.trim());
+        if (id == null) getWritableDatabase().insert("pelanggan", null, cv);
+        else getWritableDatabase().update("pelanggan", cv, "id=?", new String[]{String.valueOf(id)});
+    }
+
+    public void hapusPelanggan(int id) {
+        if (scalar("SELECT COUNT(*) FROM penjualan WHERE pelanggan_id=?", String.valueOf(id)) > 0) {
+            throw new IllegalArgumentException("Pelanggan sudah dipakai pada penjualan, tidak bisa dihapus.");
+        }
+        getWritableDatabase().delete("pelanggan", "id=?", new String[]{String.valueOf(id)});
+    }
+
     public Cursor rawQuery(String sql, String... args) {
         return getReadableDatabase().rawQuery(sql, args);
     }

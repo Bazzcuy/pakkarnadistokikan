@@ -62,6 +62,8 @@ public class DashboardActivity extends Activity {
 
         findViewById(R.id.btnProfile).setOnClickListener(v -> AppNav.open(this, ProfileActivity.class, user));
         findViewById(R.id.btnFishMaster).setOnClickListener(v -> AppNav.open(this, FishMasterActivity.class, user));
+        findViewById(R.id.btnSupplier).setOnClickListener(v -> openPartner("supplier"));
+        findViewById(R.id.btnCustomer).setOnClickListener(v -> openPartner("customer"));
         rawInput.setOnClickListener(v -> AppNav.open(this, RawStockActivity.class, user));
         production.setOnClickListener(v -> AppNav.open(this, ProductionActivity.class, user));
         sales.setOnClickListener(v -> AppNav.open(this, SalesActivity.class, user));
@@ -93,6 +95,13 @@ public class DashboardActivity extends Activity {
         Intent intent = new Intent(this, TextActivity.class);
         AppNav.putUser(intent, user);
         intent.putExtra("title", title);
+        intent.putExtra("mode", mode);
+        startActivity(intent);
+    }
+
+    private void openPartner(String mode) {
+        Intent intent = new Intent(this, PartnerMasterActivity.class);
+        AppNav.putUser(intent, user);
         intent.putExtra("mode", mode);
         startActivity(intent);
     }

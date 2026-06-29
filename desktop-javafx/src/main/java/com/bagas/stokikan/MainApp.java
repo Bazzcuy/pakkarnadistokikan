@@ -115,11 +115,15 @@ public class MainApp extends Application {
         menu.setPrefWidth(260);
         menu.getStyleClass().add("card");
 
-        HBox brand = new HBox(10, image("/images/catokan_logo.png", 48, 48), vbox(title("CATOKAN"), sub(currentUser.getNama())));
+        Button akun = secondary("Akun / Profil");
+        akun.setMaxWidth(Double.MAX_VALUE);
+        akun.setOnAction(e -> setCenter(profileView()));
+        HBox brand = new HBox(10, image("/images/catokan_logo.png", 48, 48), vbox(title("CATOKAN"), sub(currentUser.getNama()), akun));
         brand.setAlignment(Pos.CENTER_LEFT);
         Button dashboard = nav("Dashboard", () -> setCenter(dashboardView()));
-        Button profil = nav("Profil", () -> setCenter(profileView()));
         Button jenis = nav("Jenis Ikan", () -> setCenter(fishMasterView(stage)));
+        Button supplier = nav("Supplier", () -> setCenter(supplierView()));
+        Button pelanggan = nav("Pelanggan", () -> setCenter(customerView()));
         Button stokMentah = nav("Stok Mentah", () -> setCenter(rawStockView(stage)));
         Button produksi = nav("Produksi Giling", () -> setCenter(productionView()));
         Button stokGiling = nav("Stok Giling", () -> setCenter(milledStockView()));
@@ -127,7 +131,7 @@ public class MainApp extends Application {
         Button riwayat = nav("Riwayat", () -> setCenter(historyView()));
         Button laporan = nav("Laporan & Excel", () -> setCenter(reportView(stage)));
         Button logout = nav("Logout", () -> stage.setScene(loginScene(stage)));
-        menu.getChildren().addAll(brand, dashboard, profil, jenis, stokMentah, produksi, stokGiling, penjualan, riwayat, laporan, logout);
+        menu.getChildren().addAll(brand, dashboard, jenis, supplier, pelanggan, stokMentah, produksi, stokGiling, penjualan, riwayat, laporan, logout);
 
         root.setLeft(menu);
         root.setCenter(dashboardView());
@@ -192,6 +196,90 @@ public class MainApp extends Application {
         HBox wrap = new HBox(12, form(title("Input Jenis Ikan"), nama, kategori, desc, gambar, pilih, tambah), table);
         HBox.setHgrow(table, Priority.ALWAYS);
         return page("Jenis Ikan", sub("Kelola master ikan dan gambar produk."), wrap);
+    }
+
+    private VBox supplierView() {
+        TextField id = field("ID");
+        id.setEditable(false);
+        TextField nama = field("Nama supplier");
+        TextField hp = field("Nomor HP");
+        TextField alamat = field("Alamat");
+        TextField catatan = field("Catatan");
+        TableView<Map<String, Object>> table = table(Database.query("SELECT id,nama,nomor_hp,alamat,catatan FROM suppliers ORDER BY nama"));
+        table.getSelectionModel().selectedItemProperty().addListener((obs, old, row) -> {
+            if (row == null) return;
+            id.setText(value(row, "id"));
+            nama.setText(value(row, "nama"));
+            hp.setText(value(row, "nomor_hp"));
+            alamat.setText(value(row, "alamat"));
+            catatan.setText(value(row, "catatan"));
+        });
+        Button baru = secondary("Input Baru");
+        baru.setOnAction(e -> clear(id, nama, hp, alamat, catatan));
+        Button simpan = primary("Simpan Supplier");
+        simpan.setOnAction(e -> {
+            try {
+                masterService.simpanSupplier(id.getText().isBlank() ? null : Integer.parseInt(id.getText()), nama.getText(), hp.getText(), alamat.getText(), catatan.getText());
+                setCenter(supplierView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        Button hapus = secondary("Hapus Supplier");
+        hapus.setOnAction(e -> {
+            try {
+                if (id.getText().isBlank()) throw new IllegalArgumentException("Pilih supplier dari tabel dulu.");
+                masterService.hapusSupplier(Integer.parseInt(id.getText()));
+                setCenter(supplierView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        HBox wrap = new HBox(12, form(title("Kelola Supplier"), id, nama, hp, alamat, catatan, new HBox(8, baru, simpan, hapus)), table);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return page("Supplier", sub("Supplier adalah master pemasok ikan mentah yang dipakai saat input stok masuk."), wrap);
+    }
+
+    private VBox customerView() {
+        TextField id = field("ID");
+        id.setEditable(false);
+        TextField nama = field("Nama pelanggan");
+        TextField hp = field("Nomor HP");
+        TextField alamat = field("Alamat");
+        TextField tipe = field("Tipe pelanggan");
+        TableView<Map<String, Object>> table = table(Database.query("SELECT id,nama,nomor_hp,alamat,tipe_pelanggan FROM pelanggan ORDER BY nama"));
+        table.getSelectionModel().selectedItemProperty().addListener((obs, old, row) -> {
+            if (row == null) return;
+            id.setText(value(row, "id"));
+            nama.setText(value(row, "nama"));
+            hp.setText(value(row, "nomor_hp"));
+            alamat.setText(value(row, "alamat"));
+            tipe.setText(value(row, "tipe_pelanggan"));
+        });
+        Button baru = secondary("Input Baru");
+        baru.setOnAction(e -> clear(id, nama, hp, alamat, tipe));
+        Button simpan = primary("Simpan Pelanggan");
+        simpan.setOnAction(e -> {
+            try {
+                masterService.simpanPelanggan(id.getText().isBlank() ? null : Integer.parseInt(id.getText()), nama.getText(), hp.getText(), alamat.getText(), tipe.getText());
+                setCenter(customerView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        Button hapus = secondary("Hapus Pelanggan");
+        hapus.setOnAction(e -> {
+            try {
+                if (id.getText().isBlank()) throw new IllegalArgumentException("Pilih pelanggan dari tabel dulu.");
+                masterService.hapusPelanggan(Integer.parseInt(id.getText()));
+                setCenter(customerView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        HBox wrap = new HBox(12, form(title("Kelola Pelanggan"), id, nama, hp, alamat, tipe, new HBox(8, baru, simpan, hapus)), table);
+        HBox.setHgrow(table, Priority.ALWAYS);
+        return page("Pelanggan", sub("Pelanggan adalah master pembeli yang dipakai saat transaksi penjualan."), wrap);
     }
 
     private VBox rawStockView(Stage stage) {
@@ -461,6 +549,10 @@ public class MainApp extends Application {
         TextField f = new TextField();
         f.setPromptText(prompt);
         return f;
+    }
+
+    private void clear(TextField... fields) {
+        for (TextField field : fields) field.clear();
     }
 
     private TextArea area(String text) {

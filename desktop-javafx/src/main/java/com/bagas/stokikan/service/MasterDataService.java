@@ -24,6 +24,54 @@ public class MasterDataService {
         return options("SELECT id, batch_no || ' - ' || (SELECT nama FROM jenis_ikan WHERE id=stok_giling.jenis_ikan_id) || ' (' || total_kg || ' kg)' AS nama FROM stok_giling WHERE total_kg>0 ORDER BY id DESC");
     }
 
+    public void simpanSupplier(Integer id, String nama, String hp, String alamat, String catatan) {
+        if (nama == null || nama.isBlank()) throw new IllegalArgumentException("Nama supplier wajib diisi");
+        try (var c = Database.connect()) {
+            if (id == null) {
+                Database.execute(c, "INSERT INTO suppliers(nama,nomor_hp,alamat,catatan) VALUES(?,?,?,?)", nama.trim(), text(hp), text(alamat), text(catatan));
+            } else {
+                Database.execute(c, "UPDATE suppliers SET nama=?, nomor_hp=?, alamat=?, catatan=? WHERE id=?", nama.trim(), text(hp), text(alamat), text(catatan), id);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menyimpan supplier: " + e.getMessage(), e);
+        }
+    }
+
+    public void hapusSupplier(int id) {
+        if (!Database.query("SELECT id FROM stok_masuk WHERE supplier_id=? LIMIT 1", id).isEmpty()) {
+            throw new IllegalArgumentException("Supplier sudah dipakai pada stok masuk, tidak bisa dihapus. Ubah datanya saja.");
+        }
+        try (var c = Database.connect()) {
+            Database.execute(c, "DELETE FROM suppliers WHERE id=?", id);
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menghapus supplier: " + e.getMessage(), e);
+        }
+    }
+
+    public void simpanPelanggan(Integer id, String nama, String hp, String alamat, String tipe) {
+        if (nama == null || nama.isBlank()) throw new IllegalArgumentException("Nama pelanggan wajib diisi");
+        try (var c = Database.connect()) {
+            if (id == null) {
+                Database.execute(c, "INSERT INTO pelanggan(nama,nomor_hp,alamat,tipe_pelanggan) VALUES(?,?,?,?)", nama.trim(), text(hp), text(alamat), blank(tipe, "Retail"));
+            } else {
+                Database.execute(c, "UPDATE pelanggan SET nama=?, nomor_hp=?, alamat=?, tipe_pelanggan=? WHERE id=?", nama.trim(), text(hp), text(alamat), blank(tipe, "Retail"), id);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menyimpan pelanggan: " + e.getMessage(), e);
+        }
+    }
+
+    public void hapusPelanggan(int id) {
+        if (!Database.query("SELECT id FROM penjualan WHERE pelanggan_id=? LIMIT 1", id).isEmpty()) {
+            throw new IllegalArgumentException("Pelanggan sudah dipakai pada penjualan, tidak bisa dihapus. Ubah datanya saja.");
+        }
+        try (var c = Database.connect()) {
+            Database.execute(c, "DELETE FROM pelanggan WHERE id=?", id);
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menghapus pelanggan: " + e.getMessage(), e);
+        }
+    }
+
     public void tambahJenisIkan(String nama, String kategori, String deskripsi, String gambarPath) {
         if (nama == null || nama.isBlank()) throw new IllegalArgumentException("Nama jenis ikan wajib diisi");
         try (var c = Database.connect()) {
@@ -41,6 +89,10 @@ public class MasterDataService {
 
     private String blank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private String text(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private List<OptionItem> options(String sql) {
