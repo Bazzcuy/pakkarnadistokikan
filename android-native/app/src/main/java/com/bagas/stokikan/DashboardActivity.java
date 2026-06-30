@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bagas.stokikan.db.DbHelper;
 import com.bagas.stokikan.model.User;
@@ -18,12 +20,16 @@ public class DashboardActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dashboard);
-        db = new DbHelper(this);
-        user = AppNav.readUser(this);
-        bindHeader();
-        bindStats();
-        bindMenus();
+        try {
+            setContentView(R.layout.activity_dashboard);
+            db = new DbHelper(this);
+            user = AppNav.readUser(this);
+            bindHeader();
+            bindStats();
+            bindMenus();
+        } catch (Throwable error) {
+            showFallback(error);
+        }
     }
 
     @Override
@@ -39,11 +45,15 @@ public class DashboardActivity extends Activity {
     }
 
     private void bindStats() {
-        String owner = " owner_user_id=" + DbHelper.currentUserId();
-        ((TextView) findViewById(R.id.txtStokMentah)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah WHERE" + owner)));
-        ((TextView) findViewById(R.id.txtStokGiling)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE" + owner)));
-        ((TextView) findViewById(R.id.txtTotalJual)).setText("Rp " + money(db.scalar("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE" + owner)));
-        ((TextView) findViewById(R.id.txtStokLama)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day') AND owner_user_id=" + DbHelper.currentUserId())));
+        try {
+            String owner = " owner_user_id=" + DbHelper.currentUserId();
+            ((TextView) findViewById(R.id.txtStokMentah)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah WHERE" + owner)));
+            ((TextView) findViewById(R.id.txtStokGiling)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE" + owner)));
+            ((TextView) findViewById(R.id.txtTotalJual)).setText("Rp " + money(db.scalar("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE" + owner)));
+            ((TextView) findViewById(R.id.txtStokLama)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day') AND owner_user_id=" + DbHelper.currentUserId())));
+        } catch (Throwable error) {
+            Toast.makeText(this, "Dashboard belum bisa membaca data: " + error.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void bindMenus() {
@@ -108,6 +118,41 @@ public class DashboardActivity extends Activity {
         AppNav.putUser(intent, user);
         intent.putExtra("mode", mode);
         startActivity(intent);
+    }
+
+    private void showFallback(Throwable error) {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(18), dp(18), dp(18), dp(18));
+        root.setBackgroundResource(R.drawable.bg_screen);
+        TextView title = new TextView(this);
+        title.setText("Dashboard belum bisa dibuka");
+        title.setTextSize(22);
+        title.setTextColor(0xff082b4d);
+        title.setTypeface(null, 1);
+        TextView message = new TextView(this);
+        message.setText("Aplikasi tidak berhenti, tapi ada data/tampilan yang perlu diperbaiki: " + error.getMessage());
+        message.setTextSize(14);
+        message.setTextColor(0xff6a8197);
+        message.setPadding(0, dp(10), 0, dp(16));
+        TextView back = new TextView(this);
+        back.setText("Kembali ke Login");
+        back.setGravity(android.view.Gravity.CENTER);
+        back.setTextColor(0xffffffff);
+        back.setTypeface(null, 1);
+        back.setBackgroundResource(R.drawable.bg_primary_btn);
+        back.setOnClickListener(v -> {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
+        root.addView(title);
+        root.addView(message);
+        root.addView(back, new LinearLayout.LayoutParams(-1, dp(54)));
+        setContentView(root);
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private String formatKg(double value) {
