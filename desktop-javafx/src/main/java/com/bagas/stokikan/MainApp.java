@@ -129,10 +129,11 @@ public class MainApp extends Application {
         Button produksi = nav("Produksi Giling", () -> setCenter(productionView()));
         Button stokGiling = nav("Stok Giling", () -> setCenter(milledStockView()));
         Button penjualan = nav("Penjualan", () -> setCenter(salesView()));
+        Button kontrol = nav("Kontrol Stok", () -> setCenter(controlView()));
         Button riwayat = nav("Riwayat", () -> setCenter(historyView()));
         Button laporan = nav("Laporan & Excel", () -> setCenter(reportView(stage)));
         Button logout = nav("Logout", () -> stage.setScene(loginScene(stage)));
-        menu.getChildren().addAll(brand, dashboard, jenis, supplier, pelanggan, stokMentah, produksi, stokGiling, penjualan, riwayat, laporan, logout);
+        menu.getChildren().addAll(brand, dashboard, jenis, supplier, pelanggan, stokMentah, produksi, stokGiling, penjualan, kontrol, riwayat, laporan, logout);
 
         root.setLeft(menu);
         root.setCenter(dashboardView());
@@ -371,6 +372,53 @@ public class MainApp extends Application {
         box.getChildren().add(1, new HBox(10, new Label("Periode"), periode, new Label("Jenis"), jenis, filter));
         refresh.run();
         return box;
+    }
+
+    private VBox controlView() {
+        TextField nomor = field("Nomor transaksi");
+        TextField alasanBatal = field("Alasan retur/batal");
+        Button batal = primary("Batalkan / Retur Transaksi");
+        batal.setOnAction(e -> {
+            try {
+                alert("Berhasil", salesService.batalkanPenjualan(nomor.getText(), alasanBatal.getText()));
+                setCenter(controlView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+
+        ComboBox<OptionItem> jenisMentah = combo(masterService.jenisIkan());
+        TextField fisikMentah = field("Stok fisik mentah kg");
+        TextField alasanMentah = field("Alasan opname mentah");
+        Button opnameMentah = secondary("Simpan Opname Mentah");
+        opnameMentah.setOnAction(e -> {
+            try {
+                alert("Berhasil", stockService.sesuaikanStokMentah(jenisMentah.getValue().getId(), toDouble(fisikMentah), alasanMentah.getText()));
+                setCenter(controlView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+
+        ComboBox<OptionItem> batchGiling = combo(masterService.batchGiling());
+        TextField fisikGiling = field("Stok fisik giling kg");
+        TextField alasanGiling = field("Alasan opname giling");
+        Button opnameGiling = secondary("Simpan Opname Giling");
+        opnameGiling.setOnAction(e -> {
+            try {
+                alert("Berhasil", stockService.sesuaikanStokGiling(batchGiling.getValue().getId(), toDouble(fisikGiling), alasanGiling.getText()));
+                setCenter(controlView());
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+
+        HBox forms = new HBox(12,
+                form(title("Retur / Batal"), sub("Membatalkan transaksi akan mengembalikan stok giling sesuai detail penjualan."), nomor, alasanBatal, batal),
+                form(title("Opname Stok Mentah"), sub("Masukkan jumlah fisik hasil hitung ulang. Sistem mencatat selisih ke riwayat."), jenisMentah, fisikMentah, alasanMentah, opnameMentah),
+                form(title("Opname Stok Giling"), sub("Pilih batch giling yang dihitung ulang agar koreksi tetap jelas."), batchGiling, fisikGiling, alasanGiling, opnameGiling));
+        TableView<Map<String, Object>> table = table(Database.query("SELECT tanggal,jenis_stok,stok_sistem,stok_fisik,selisih,alasan FROM penyesuaian_stok ORDER BY id DESC"));
+        return page("Kontrol Stok", sub("Menu audit untuk retur/batal transaksi dan penyesuaian stok hasil opname."), forms, table);
     }
 
     private VBox reportView(Stage stage) {

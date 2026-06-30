@@ -240,6 +240,97 @@ public class StockService {
         }
     }
 
+    public String batalkanPenjualan(String nomor, String alasan) {
+        if (nomor == null || nomor.trim().isEmpty()) throw new IllegalArgumentException("Nomor transaksi wajib diisi");
+        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan retur/batal wajib diisi");
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            int penjualanId = (int) dbh.scalar("SELECT id FROM penjualan WHERE nomor_transaksi=?", nomor.trim());
+            if (penjualanId <= 0) throw new IllegalArgumentException("Transaksi tidak ditemukan");
+            String status = "";
+            try (Cursor statusCursor = db.rawQuery("SELECT status_pembayaran FROM penjualan WHERE id=?", new String[]{String.valueOf(penjualanId)})) {
+                if (statusCursor.moveToFirst()) status = statusCursor.getString(0);
+            }
+            if ("DIBATALKAN".equals(status)) throw new IllegalArgumentException("Transaksi sudah dibatalkan");
+
+            try (Cursor c = db.rawQuery("SELECT stok_giling_id,jenis_ikan_id,jumlah_kg FROM detail_penjualan WHERE penjualan_id=?", new String[]{String.valueOf(penjualanId)})) {
+                while (c.moveToNext()) {
+                    int stokGilingId = c.getInt(0);
+                    int jenisIkanId = c.getInt(1);
+                    double kg = c.getDouble(2);
+                    double before = dbh.scalar("SELECT total_kg FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
+                    double after = before + kg;
+                    ContentValues update = new ContentValues();
+                    update.put("total_kg", after);
+                    update.put("status_stok", "TERSEDIA");
+                    db.update("stok_giling", update, "id=?", new String[]{String.valueOf(stokGilingId)});
+                    riwayat(db, jenisIkanId, "RETUR_BATAL", "GILING", nomor.trim(), kg, before, after, alasan.trim());
+                }
+            }
+
+            ContentValues penjualan = new ContentValues();
+            penjualan.put("subtotal", 0);
+            penjualan.put("diskon", 0);
+            penjualan.put("total", 0);
+            penjualan.put("status_pembayaran", "DIBATALKAN");
+            db.update("penjualan", penjualan, "id=?", new String[]{String.valueOf(penjualanId)});
+            ContentValues pembayaran = new ContentValues();
+            pembayaran.put("jumlah_bayar", 0);
+            pembayaran.put("sisa_bayar", 0);
+            pembayaran.put("status", "DIBATALKAN");
+            pembayaran.put("catatan", alasan.trim());
+            db.update("pembayaran", pembayaran, "penjualan_id=?", new String[]{String.valueOf(penjualanId)});
+            db.setTransactionSuccessful();
+            return "Transaksi " + nomor.trim() + " dibatalkan dan stok dikembalikan.";
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public String sesuaikanStokMentah(int jenisIkanId, double stokFisik, String alasan) {
+        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
+        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan opname wajib diisi");
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            double before = dbh.scalar("SELECT total_kg FROM stok_mentah WHERE jenis_ikan_id=?", String.valueOf(jenisIkanId));
+            double selisih = stokFisik - before;
+            ContentValues update = new ContentValues();
+            update.put("total_kg", stokFisik);
+            update.put("updated_at", DateUtil.now());
+            db.update("stok_mentah", update, "jenis_ikan_id=?", new String[]{String.valueOf(jenisIkanId)});
+            penyesuaian(db, "MENTAH", before, stokFisik, selisih, alasan.trim());
+            riwayat(db, jenisIkanId, "PENYESUAIAN_STOK", "MENTAH", "opname", selisih, before, stokFisik, alasan.trim());
+            db.setTransactionSuccessful();
+            return "Stok mentah disesuaikan. Selisih: " + selisih + " kg";
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public String sesuaikanStokGiling(int stokGilingId, double stokFisik, String alasan) {
+        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
+        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan opname wajib diisi");
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            double before = dbh.scalar("SELECT total_kg FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
+            int jenisIkanId = (int) dbh.scalar("SELECT jenis_ikan_id FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
+            double selisih = stokFisik - before;
+            ContentValues update = new ContentValues();
+            update.put("total_kg", stokFisik);
+            update.put("status_stok", stokFisik <= 0 ? "HABIS" : "TERSEDIA");
+            db.update("stok_giling", update, "id=?", new String[]{String.valueOf(stokGilingId)});
+            penyesuaian(db, "GILING", before, stokFisik, selisih, alasan.trim());
+            riwayat(db, jenisIkanId, "PENYESUAIAN_STOK", "GILING", "opname", selisih, before, stokFisik, alasan.trim());
+            db.setTransactionSuccessful();
+            return "Stok giling disesuaikan. Selisih: " + selisih + " kg";
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     private void riwayat(SQLiteDatabase db, int jenisIkanId, String transaksi, String jenisStok, String ref, double perubahan, double before, double after, String ket) {
         ContentValues r = new ContentValues();
         r.put("tanggal", DateUtil.now());
@@ -252,5 +343,16 @@ public class StockService {
         r.put("stok_sesudah", after);
         r.put("keterangan", ket);
         db.insert("riwayat_stok", null, r);
+    }
+
+    private void penyesuaian(SQLiteDatabase db, String jenisStok, double sistem, double fisik, double selisih, String alasan) {
+        ContentValues p = new ContentValues();
+        p.put("tanggal", DateUtil.now());
+        p.put("jenis_stok", jenisStok);
+        p.put("stok_sistem", sistem);
+        p.put("stok_fisik", fisik);
+        p.put("selisih", selisih);
+        p.put("alasan", alasan);
+        db.insert("penyesuaian_stok", null, p);
     }
 }

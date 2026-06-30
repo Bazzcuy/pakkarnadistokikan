@@ -33,6 +33,55 @@ public class StockService {
         return sb.toString();
     }
 
+    public String sesuaikanStokMentah(int jenisIkanId, double stokFisik, String alasan) {
+        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
+        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan penyesuaian wajib diisi");
+        try (Connection c = Database.connect()) {
+            c.setAutoCommit(false);
+            try {
+                double before = Database.scalarDouble(c, "SELECT total_kg FROM stok_mentah WHERE jenis_ikan_id=?", jenisIkanId);
+                double selisih = stokFisik - before;
+                Database.execute(c, "UPDATE stok_mentah SET total_kg=?, updated_at=? WHERE jenis_ikan_id=?", stokFisik, DateUtil.now(), jenisIkanId);
+                Database.insertAndGetId(c, "INSERT INTO penyesuaian_stok(tanggal,jenis_stok,stok_sistem,stok_fisik,selisih,alasan) VALUES(?,?,?,?,?,?)", DateUtil.now(), "MENTAH", before, stokFisik, selisih, alasan.trim());
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENYESUAIAN_STOK", "MENTAH", "opname", selisih, before, stokFisik, alasan.trim());
+                c.commit();
+                return "Stok mentah disesuaikan. Selisih: " + selisih + " kg";
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menyesuaikan stok mentah: " + e.getMessage(), e);
+        }
+    }
+
+    public String sesuaikanStokGiling(int stokGilingId, double stokFisik, String alasan) {
+        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
+        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan penyesuaian wajib diisi");
+        try (Connection c = Database.connect()) {
+            c.setAutoCommit(false);
+            try {
+                double before = Database.scalarDouble(c, "SELECT total_kg FROM stok_giling WHERE id=?", stokGilingId);
+                int jenisIkanId = (int) Database.scalarDouble(c, "SELECT jenis_ikan_id FROM stok_giling WHERE id=?", stokGilingId);
+                double selisih = stokFisik - before;
+                Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", stokFisik, stokFisik <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
+                Database.insertAndGetId(c, "INSERT INTO penyesuaian_stok(tanggal,jenis_stok,stok_sistem,stok_fisik,selisih,alasan) VALUES(?,?,?,?,?,?)", DateUtil.now(), "GILING", before, stokFisik, selisih, alasan.trim());
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENYESUAIAN_STOK", "GILING", "opname", selisih, before, stokFisik, alasan.trim());
+                c.commit();
+                return "Stok giling disesuaikan. Selisih: " + selisih + " kg";
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menyesuaikan stok giling: " + e.getMessage(), e);
+        }
+    }
+
     public String stokGilingText() {
         StringBuilder sb = new StringBuilder("DAFTAR STOK IKAN GILING PER BATCH\n\n");
         var rows = Database.query("SELECT g.id, g.batch_no, j.nama AS jenis_ikan, g.total_kg, g.harga_jual_per_kg, g.tanggal_produksi, g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC");

@@ -65,6 +65,7 @@ public class DashboardActivity extends Activity {
         findViewById(R.id.btnFishMaster).setOnClickListener(v -> AppNav.open(this, FishMasterActivity.class, user));
         findViewById(R.id.btnSupplier).setOnClickListener(v -> openPartner("supplier"));
         findViewById(R.id.btnCustomer).setOnClickListener(v -> openPartner("customer"));
+        findViewById(R.id.btnStockControl).setOnClickListener(v -> AppNav.open(this, StockControlActivity.class, user));
         findViewById(R.id.btnTransferData).setOnClickListener(v -> AppNav.open(this, DataTransferActivity.class, user));
         rawInput.setOnClickListener(v -> AppNav.open(this, RawStockActivity.class, user));
         production.setOnClickListener(v -> AppNav.open(this, ProductionActivity.class, user));

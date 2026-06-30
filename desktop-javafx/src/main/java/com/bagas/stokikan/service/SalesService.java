@@ -103,6 +103,52 @@ public class SalesService {
         throw new IllegalArgumentException("Sistem tidak menerima utang. Transaksi penjualan wajib lunas saat dibuat.");
     }
 
+    public String batalkanPenjualan(String nomorTransaksi, String alasan) {
+        if (nomorTransaksi == null || nomorTransaksi.isBlank()) throw new IllegalArgumentException("Nomor transaksi wajib diisi");
+        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan retur/batal wajib diisi");
+        try (Connection c = Database.connect()) {
+            c.setAutoCommit(false);
+            try {
+                int penjualanId = (int) Database.scalarDouble(c, "SELECT id FROM penjualan WHERE nomor_transaksi=?", nomorTransaksi.trim());
+                if (penjualanId <= 0) throw new IllegalArgumentException("Transaksi tidak ditemukan");
+                String status = "";
+                try (PreparedStatement ps = c.prepareStatement("SELECT status_pembayaran FROM penjualan WHERE id=?")) {
+                    ps.setInt(1, penjualanId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) status = rs.getString(1);
+                    }
+                }
+                if ("DIBATALKAN".equals(status)) throw new IllegalArgumentException("Transaksi sudah dibatalkan");
+
+                try (PreparedStatement ps = c.prepareStatement("SELECT stok_giling_id,jenis_ikan_id,jumlah_kg FROM detail_penjualan WHERE penjualan_id=?")) {
+                    ps.setInt(1, penjualanId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int stokGilingId = rs.getInt("stok_giling_id");
+                            int jenisIkanId = rs.getInt("jenis_ikan_id");
+                            double kg = rs.getDouble("jumlah_kg");
+                            double before = Database.scalarDouble(c, "SELECT total_kg FROM stok_giling WHERE id=?", stokGilingId);
+                            double after = before + kg;
+                            Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok='TERSEDIA' WHERE id=?", after, stokGilingId);
+                            Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "RETUR_BATAL", "GILING", nomorTransaksi.trim(), kg, before, after, alasan.trim());
+                        }
+                    }
+                }
+                Database.execute(c, "UPDATE penjualan SET subtotal=0,diskon=0,total=0,status_pembayaran='DIBATALKAN' WHERE id=?", penjualanId);
+                Database.execute(c, "UPDATE pembayaran SET jumlah_bayar=0,sisa_bayar=0,status='DIBATALKAN',catatan=? WHERE penjualan_id=?", alasan.trim(), penjualanId);
+                c.commit();
+                return "Transaksi " + nomorTransaksi.trim() + " dibatalkan dan stok dikembalikan.";
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal membatalkan transaksi: " + e.getMessage(), e);
+        }
+    }
+
     public String transaksiText() {
         StringBuilder sb = new StringBuilder("RIWAYAT PENJUALAN\n\n");
         var rows = Database.query("SELECT p.id,p.nomor_transaksi,p.tanggal,pl.nama AS pelanggan,p.total,p.status_pembayaran FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id ORDER BY p.id DESC");

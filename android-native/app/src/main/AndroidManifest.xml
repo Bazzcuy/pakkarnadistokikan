@@ -4,6 +4,7 @@
         android:icon="@drawable/catokan_logo"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
+        <activity android:name=".StockControlActivity" android:exported="false" />
         <activity android:name=".DataTransferActivity" android:exported="false" />
         <activity android:name=".FishMasterActivity" android:exported="false" />
         <activity android:name=".PartnerMasterActivity" android:exported="false" />

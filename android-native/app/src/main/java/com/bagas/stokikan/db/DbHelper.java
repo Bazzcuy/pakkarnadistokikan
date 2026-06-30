@@ -23,10 +23,10 @@ import java.util.List;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "stok_ikan_giling_android.db";
-    private static final int DB_VERSION = 5;
+    private static final int DB_VERSION = 6;
     private static final String[] TRANSFER_TABLES = {
             "users", "jenis_ikan", "suppliers", "pelanggan", "stok_mentah", "stok_giling",
-            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "riwayat_stok"
+            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "penyesuaian_stok", "riwayat_stok"
     };
 
     public DbHelper(Context context) {
@@ -46,12 +46,16 @@ public class DbHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, nomor_transaksi TEXT UNIQUE NOT NULL, tanggal TEXT NOT NULL, pelanggan_id INTEGER, kasir_id INTEGER, subtotal REAL NOT NULL, diskon REAL DEFAULT 0, total REAL NOT NULL, status_pembayaran TEXT NOT NULL)");
         db.execSQL("CREATE TABLE detail_penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, stok_giling_id INTEGER NOT NULL, jenis_ikan_id INTEGER NOT NULL, jumlah_kg REAL NOT NULL, harga_per_kg REAL NOT NULL, subtotal REAL NOT NULL)");
         db.execSQL("CREATE TABLE pembayaran (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, tanggal TEXT NOT NULL, metode TEXT NOT NULL, jumlah_bayar REAL NOT NULL, sisa_bayar REAL NOT NULL, status TEXT NOT NULL, catatan TEXT)");
+        db.execSQL("CREATE TABLE penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
         db.execSQL("CREATE TABLE riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
         seed(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 6) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
+        }
         if (oldVersion < 5) {
             addColumn(db, "riwayat_stok", "jenis_ikan_id", "INTEGER");
             db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");
@@ -60,6 +64,7 @@ public class DbHelper extends SQLiteOpenHelper {
             db.execSQL("UPDATE pembayaran SET sisa_bayar=0,status='LUNAS',catatan='Pembayaran lunas' WHERE status='BELUM_LUNAS'");
             return;
         }
+        if (oldVersion < 6) return;
         if (oldVersion >= 3 && newVersion >= 4) {
             addColumn(db, "riwayat_stok", "jenis_ikan_id", "INTEGER");
             db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");

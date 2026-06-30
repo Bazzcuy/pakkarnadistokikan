@@ -19,7 +19,7 @@ public class ExcelService {
     private final StockService stockService = new StockService();
     private static final List<String> BACKUP_TABLES = List.of(
             "users", "jenis_ikan", "suppliers", "pelanggan", "stok_mentah", "stok_giling",
-            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "riwayat_stok"
+            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "penyesuaian_stok", "riwayat_stok"
     );
 
     public void exportReport(Path file) {
