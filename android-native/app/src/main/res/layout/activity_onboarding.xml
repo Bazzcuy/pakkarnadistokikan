@@ -1,14 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_screen" android:fillViewport="true">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp" android:gravity="center_horizontal">
-        <ImageView android:layout_width="match_parent" android:layout_height="260dp" android:src="@drawable/catokan_banner" android:scaleType="centerCrop" android:contentDescription="Banner CATOKAN" />
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp" android:layout_marginTop="16dp" android:background="@drawable/bg_card">
-            <TextView style="@style/CatokanTitle" android:text="Kelola stok ikan tanpa ribet" />
-            <TextView style="@style/CatokanSubtitle" android:text="CATOKAN membantu mencatat stok mentah, produksi giling, transaksi penjualan, dan laporan ringkas secara lokal/offline." android:layout_marginTop="6dp" />
-            <TextView style="@style/CatokanLabel" android:text="Fitur unggulan" android:layout_marginTop="10dp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="- Dashboard cepat&#10;- Input stok dan produksi&#10;- Penjualan cepat&#10;- Satu login pengguna untuk semua fitur&#10;- SQLite lokal tanpa internet" android:textColor="@color/catokan_text" android:textSize="14sp" android:lineSpacingExtra="4dp" />
-            <Button android:id="@+id/btnStart" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:background="@drawable/bg_primary_btn" android:text="Mulai Pakai CATOKAN" android:textAllCaps="false" android:textColor="@color/white" android:textStyle="bold" />
-            <Button android:id="@+id/btnSkip" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_secondary_btn" android:text="Lewati ke Login" android:textAllCaps="false" android:textColor="@color/catokan_primary_dark" android:textStyle="bold" />
-        </LinearLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@drawable/bg_screen">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp"
+        android:gravity="center_horizontal">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="360dp"
+            android:src="@drawable/catokan_hero"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Kelola Stok Ikan dengan Lebih Rapi"
+            android:textColor="@color/catokan_text"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="CATOKAN membantu mencatat stok mentah, produksi ikan giling, transaksi, laporan, dan cadangan data dalam satu aplikasi."
+            android:textColor="@color/catokan_muted"
+            android:textSize="15sp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp" />
+
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_primary_btn"
+            android:text="Mulai Sekarang"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnSkip"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_secondary_btn"
+            android:text="Lewati"
+            android:textAllCaps="false"
+            android:textColor="@color/catokan_primary"
+            android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>
