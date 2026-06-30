@@ -35,6 +35,7 @@ public class StockControlActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppNav.readUser(this);
         db = new DbHelper(this);
         service = new StockService(db);
         setContentView(buildView());

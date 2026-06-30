@@ -25,6 +25,7 @@ public class DataTransferActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppNav.readUser(this);
         db = new DbHelper(this);
         setContentView(buildView());
     }

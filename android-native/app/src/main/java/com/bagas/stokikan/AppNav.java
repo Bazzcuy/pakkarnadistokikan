@@ -3,6 +3,7 @@ package com.bagas.stokikan;
 import android.app.Activity;
 import android.content.Intent;
 
+import com.bagas.stokikan.db.DbHelper;
 import com.bagas.stokikan.model.User;
 
 public class AppNav {
@@ -22,6 +23,7 @@ public class AppNav {
         if (nama == null) nama = "Pengguna";
         if (username == null) username = "user";
         if (role == null) role = "PENGGUNA";
+        DbHelper.setCurrentUserId(id <= 0 ? 1 : id);
         return new User(id, nama, username, role);
     }
 

@@ -26,6 +26,7 @@ public class PartnerMasterActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppNav.readUser(this);
         db = new DbHelper(this);
         supplierMode = "supplier".equals(getIntent().getStringExtra("mode"));
         setContentView(view());
@@ -79,8 +80,8 @@ public class PartnerMasterActivity extends Activity {
     private void load() {
         list.removeAllViews();
         String sql = supplierMode
-                ? "SELECT id,nama,nomor_hp,alamat,catatan FROM suppliers ORDER BY nama"
-                : "SELECT id,nama,nomor_hp,alamat,tipe_pelanggan FROM pelanggan ORDER BY nama";
+                ? "SELECT id,nama,nomor_hp,alamat,catatan FROM suppliers WHERE owner_user_id=" + DbHelper.currentUserId() + " ORDER BY nama"
+                : "SELECT id,nama,nomor_hp,alamat,tipe_pelanggan FROM pelanggan WHERE owner_user_id=" + DbHelper.currentUserId() + " ORDER BY nama";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
                 int rowId = c.getInt(0);

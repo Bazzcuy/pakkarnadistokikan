@@ -60,6 +60,7 @@ public class RegisterActivity extends Activity {
         try {
             db.register(text(nama), text(username), text(password), text(usaha), text(hp), text(alamat));
             User user = db.login(text(username), text(password));
+            DbHelper.setCurrentUserId(user.id);
             Intent intent = new Intent(this, DashboardActivity.class);
             AppNav.putUser(intent, user);
             startActivity(intent);

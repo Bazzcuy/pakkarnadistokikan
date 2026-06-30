@@ -29,6 +29,7 @@ public class TextActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppNav.readUser(this);
         db = new DbHelper(this);
         mode = getIntent().getStringExtra("mode");
         setContentView(view());
@@ -86,8 +87,8 @@ public class TextActivity extends Activity {
     }
 
     private void renderRaw() {
-        summary("Total Stok Mentah", kg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah")), "Jenis ikan", String.valueOf(count("jenis_ikan")));
-        String sql = "SELECT j.nama,j.kategori,j.deskripsi,j.gambar_path,s.total_kg,s.updated_at FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id WHERE 1=1 " + jenisSql("j.nama") + " ORDER BY s.total_kg DESC";
+        summary("Total Stok Mentah", kg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah WHERE owner_user_id=" + DbHelper.currentUserId())), "Jenis ikan", String.valueOf(count("jenis_ikan")));
+        String sql = "SELECT j.nama,j.kategori,j.deskripsi,j.gambar_path,s.total_kg,s.updated_at FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id AND j.owner_user_id=s.owner_user_id WHERE s.owner_user_id=" + DbHelper.currentUserId() + jenisSql("j.nama") + " ORDER BY s.total_kg DESC";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
                 LinearLayout row = imageCard(c.getString(3));
@@ -103,8 +104,8 @@ public class TextActivity extends Activity {
     }
 
     private void renderGiling() {
-        summary("Total Stok Giling", kg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling")), "Data tersedia", String.valueOf(countWhere("stok_giling", "total_kg>0")));
-        String sql = "SELECT j.nama,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id WHERE 1=1 " + jenisSql("j.nama") + periodSql("g.tanggal_produksi") + " ORDER BY date(g.tanggal_produksi),g.id";
+        summary("Total Stok Giling", kg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE owner_user_id=" + DbHelper.currentUserId())), "Data tersedia", String.valueOf(countWhere("stok_giling", "total_kg>0")));
+        String sql = "SELECT j.nama,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id AND j.owner_user_id=g.owner_user_id WHERE g.owner_user_id=" + DbHelper.currentUserId() + jenisSql("j.nama") + periodSql("g.tanggal_produksi") + " ORDER BY date(g.tanggal_produksi),g.id";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
                 LinearLayout row = imageCard(c.getString(1));
@@ -119,15 +120,15 @@ public class TextActivity extends Activity {
     }
 
     private void renderReport() {
-        double mentah = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah");
-        double giling = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling");
+        double mentah = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah WHERE owner_user_id=" + DbHelper.currentUserId());
+        double giling = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE owner_user_id=" + DbHelper.currentUserId());
         String salesWhere = salesFilterSql();
-        double jual = db.scalar("SELECT IFNULL(SUM(p.total),0) FROM penjualan p WHERE 1=1 " + salesWhere);
-        double stokLama = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')");
+        double jual = db.scalar("SELECT IFNULL(SUM(p.total),0) FROM penjualan p WHERE p.owner_user_id=" + DbHelper.currentUserId() + salesWhere);
+        double stokLama = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day') AND owner_user_id=" + DbHelper.currentUserId());
         summary("Stok Mentah", kg(mentah), "Stok Giling", kg(giling));
         summary("Penjualan Lunas", "Rp " + money(jual), "Stok Perlu Dijual Dulu", kg(stokLama));
         section("Transaksi Penjualan");
-        String sales = "SELECT p.nomor_transaksi,p.tanggal,IFNULL(pl.nama,'Pelanggan Umum') pelanggan,j.nama jenis_ikan,d.jumlah_kg,p.total,p.status_pembayaran FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id JOIN jenis_ikan j ON j.id=d.jenis_ikan_id LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE 1=1 " + salesWhere + " ORDER BY p.tanggal DESC,p.id DESC LIMIT 25";
+        String sales = "SELECT p.nomor_transaksi,p.tanggal,IFNULL(pl.nama,'Pelanggan Umum') pelanggan,j.nama jenis_ikan,d.jumlah_kg,p.total,p.status_pembayaran FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id AND d.owner_user_id=p.owner_user_id JOIN jenis_ikan j ON j.id=d.jenis_ikan_id AND j.owner_user_id=p.owner_user_id LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id AND pl.owner_user_id=p.owner_user_id WHERE p.owner_user_id=" + DbHelper.currentUserId() + salesWhere + " ORDER BY p.tanggal DESC,p.id DESC LIMIT 25";
         try (Cursor c = db.rawQuery(sales)) {
             while (c.moveToNext()) {
                 LinearLayout row = miniCard();
@@ -142,7 +143,7 @@ public class TextActivity extends Activity {
     private void historyBlock(String title, String jenisStok) {
         section(title);
         String stok = jenisStok == null ? "" : " AND r.jenis_stok='" + jenisStok + "' ";
-        String sql = "SELECT r.tanggal,IFNULL(j.nama,'-') jenis_ikan,r.jenis_transaksi,r.jenis_stok,r.referensi,r.perubahan_kg,r.stok_sebelum,r.stok_sesudah,r.keterangan FROM riwayat_stok r LEFT JOIN jenis_ikan j ON j.id=r.jenis_ikan_id WHERE 1=1 " + stok + jenisHistorySql() + periodSql("r.tanggal") + " ORDER BY r.tanggal DESC,r.id DESC LIMIT 30";
+        String sql = "SELECT r.tanggal,IFNULL(j.nama,'-') jenis_ikan,r.jenis_transaksi,r.jenis_stok,r.referensi,r.perubahan_kg,r.stok_sebelum,r.stok_sesudah,r.keterangan FROM riwayat_stok r LEFT JOIN jenis_ikan j ON j.id=r.jenis_ikan_id AND j.owner_user_id=r.owner_user_id WHERE r.owner_user_id=" + DbHelper.currentUserId() + stok + jenisHistorySql() + periodSql("r.tanggal") + " ORDER BY r.tanggal DESC,r.id DESC LIMIT 30";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
                 LinearLayout row = miniCard();
@@ -213,7 +214,7 @@ public class TextActivity extends Activity {
     private String[] jenisItems() {
         java.util.ArrayList<String> items = new java.util.ArrayList<>();
         items.add("Semua Ikan");
-        try (Cursor c = db.rawQuery("SELECT nama FROM jenis_ikan ORDER BY nama")) {
+        try (Cursor c = db.rawQuery("SELECT nama FROM jenis_ikan WHERE owner_user_id=" + DbHelper.currentUserId() + " ORDER BY nama")) {
             while (c.moveToNext()) items.add(c.getString(0));
         }
         return items.toArray(new String[0]);
@@ -240,14 +241,14 @@ public class TextActivity extends Activity {
         if (jenis == null || jenis.getSelectedItem() == null) return sql;
         String value = jenis.getSelectedItem().toString();
         if ("Semua Ikan".equals(value)) return sql;
-        return sql + " AND EXISTS (SELECT 1 FROM detail_penjualan dx JOIN jenis_ikan jx ON jx.id=dx.jenis_ikan_id WHERE dx.penjualan_id=p.id AND jx.nama='" + value.replace("'", "''") + "') ";
+        return sql + " AND EXISTS (SELECT 1 FROM detail_penjualan dx JOIN jenis_ikan jx ON jx.id=dx.jenis_ikan_id AND jx.owner_user_id=dx.owner_user_id WHERE dx.penjualan_id=p.id AND dx.owner_user_id=p.owner_user_id AND jx.nama='" + value.replace("'", "''") + "') ";
     }
 
     private String jenisHistorySql() {
         if (jenis == null || jenis.getSelectedItem() == null) return "";
         String value = jenis.getSelectedItem().toString();
         if ("Semua Ikan".equals(value)) return "";
-        return " AND r.jenis_ikan_id=(SELECT id FROM jenis_ikan WHERE nama='" + value.replace("'", "''") + "' LIMIT 1) ";
+        return " AND r.jenis_ikan_id=(SELECT id FROM jenis_ikan WHERE nama='" + value.replace("'", "''") + "' AND owner_user_id=" + DbHelper.currentUserId() + " LIMIT 1) ";
     }
 
     private String subtitle() {
@@ -257,11 +258,11 @@ public class TextActivity extends Activity {
     }
 
     private long count(String table) {
-        return (long) db.scalar("SELECT COUNT(*) FROM " + table);
+        return (long) db.scalar("SELECT COUNT(*) FROM " + table + " WHERE owner_user_id=" + DbHelper.currentUserId());
     }
 
     private long countWhere(String table, String where) {
-        return (long) db.scalar("SELECT COUNT(*) FROM " + table + " WHERE " + where);
+        return (long) db.scalar("SELECT COUNT(*) FROM " + table + " WHERE " + where + " AND owner_user_id=" + DbHelper.currentUserId());
     }
 
     private void setImage(ImageView img, String path) {

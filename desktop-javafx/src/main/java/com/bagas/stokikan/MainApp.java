@@ -177,6 +177,8 @@ public class MainApp extends Application {
     }
 
     private VBox fishMasterView(Stage stage) {
+        TextField id = field("ID");
+        id.setEditable(false);
         TextField nama = field("Nama jenis ikan");
         TextField kategori = field("Kategori");
         TextField desc = field("Deskripsi");
@@ -186,17 +188,37 @@ public class MainApp extends Application {
             File file = openImage(stage);
             if (file != null) gambar.setText(file.getAbsolutePath());
         });
-        Button tambah = primary("Tambah Jenis Ikan");
-        tambah.setOnAction(e -> {
+        TableView<Map<String, Object>> table = table(Database.query("SELECT id,nama,kategori,deskripsi,gambar_path FROM jenis_ikan WHERE aktif=1 ORDER BY nama"));
+        table.getSelectionModel().selectedItemProperty().addListener((obs, old, row) -> {
+            if (row == null) return;
+            id.setText(value(row, "id"));
+            nama.setText(value(row, "nama"));
+            kategori.setText(value(row, "kategori"));
+            desc.setText(value(row, "deskripsi"));
+            gambar.setText(value(row, "gambar_path"));
+        });
+        Button baru = secondary("Input Baru");
+        baru.setOnAction(e -> clear(id, nama, kategori, desc, gambar));
+        Button simpan = primary("Simpan Jenis Ikan");
+        simpan.setOnAction(e -> {
             try {
-                masterService.tambahJenisIkan(nama.getText(), kategori.getText(), desc.getText(), gambar.getText());
+                masterService.simpanJenisIkan(id.getText().isBlank() ? null : Integer.parseInt(id.getText()), nama.getText(), kategori.getText(), desc.getText(), gambar.getText());
                 setCenter(fishMasterView(stage));
             } catch (Exception ex) {
                 alert("Gagal", ex.getMessage());
             }
         });
-        TableView<Map<String, Object>> table = table(Database.query("SELECT nama,kategori,deskripsi,gambar_path FROM jenis_ikan WHERE aktif=1 ORDER BY nama"));
-        HBox wrap = new HBox(12, form(title("Input Jenis Ikan"), nama, kategori, desc, gambar, pilih, tambah), table);
+        Button hapus = secondary("Hapus Jenis Ikan");
+        hapus.setOnAction(e -> {
+            try {
+                if (id.getText().isBlank()) throw new IllegalArgumentException("Pilih jenis ikan dari tabel dulu.");
+                masterService.hapusJenisIkan(Integer.parseInt(id.getText()));
+                setCenter(fishMasterView(stage));
+            } catch (Exception ex) {
+                alert("Gagal", ex.getMessage());
+            }
+        });
+        HBox wrap = new HBox(12, form(title("Kelola Jenis Ikan"), id, nama, kategori, desc, gambar, pilih, new HBox(8, baru, simpan, hapus)), table);
         HBox.setHgrow(table, Priority.ALWAYS);
         return page("Jenis Ikan", sub("Kelola master ikan dan gambar produk."), wrap);
     }

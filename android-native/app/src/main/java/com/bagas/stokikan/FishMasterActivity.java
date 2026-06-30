@@ -20,6 +20,7 @@ public class FishMasterActivity extends Activity {
     private static final int PICK_IMAGE = 21;
     private DbHelper db;
     private LinearLayout list;
+    private EditText id;
     private EditText nama;
     private EditText kategori;
     private EditText deskripsi;
@@ -29,6 +30,7 @@ public class FishMasterActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppNav.readUser(this);
         db = new DbHelper(this);
         setContentView(view());
         loadList();
@@ -44,6 +46,8 @@ public class FishMasterActivity extends Activity {
         root.addView(form);
         title(form, "Jenis Ikan");
         subtitle(form, "Tambah data jenis ikan, kategori, deskripsi, dan gambar produk.");
+        id = input(form, "ID", "");
+        id.setEnabled(false);
         preview = new ImageView(this);
         preview.setImageResource(R.drawable.catokan_banner);
         preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -54,9 +58,18 @@ public class FishMasterActivity extends Activity {
         Button pick = button("Pilih Gambar Ikan", false);
         pick.setOnClickListener(v -> pickImage());
         form.addView(pick);
-        Button save = button("Tambah Jenis Ikan", true);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        Button baru = button("Baru", false);
+        baru.setOnClickListener(v -> clear());
+        Button save = button("Simpan", true);
         save.setOnClickListener(v -> save());
-        form.addView(save);
+        Button hapus = button("Hapus", false);
+        hapus.setOnClickListener(v -> delete());
+        actions.addView(baru, new LinearLayout.LayoutParams(0, -2, 1));
+        actions.addView(save, new LinearLayout.LayoutParams(0, -2, 1));
+        actions.addView(hapus, new LinearLayout.LayoutParams(0, -2, 1));
+        form.addView(actions);
 
         LinearLayout listCard = card();
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
@@ -91,37 +104,70 @@ public class FishMasterActivity extends Activity {
 
     private void save() {
         try {
-            db.tambahJenisIkan(text(nama), text(kategori), text(deskripsi), gambarPath);
-            nama.setText("");
-            kategori.setText("");
-            deskripsi.setText("");
-            gambarPath = "";
-            preview.setImageResource(R.drawable.catokan_banner);
+            Integer rowId = text(id).isEmpty() ? null : Integer.parseInt(text(id));
+            db.simpanJenisIkan(rowId, text(nama), text(kategori), text(deskripsi), gambarPath);
+            clear();
             loadList();
-            Toast.makeText(this, "Jenis ikan berhasil ditambahkan", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Jenis ikan berhasil disimpan", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
+    private void delete() {
+        try {
+            if (text(id).isEmpty()) throw new IllegalArgumentException("Pilih jenis ikan dari daftar dulu.");
+            db.hapusJenisIkan(Integer.parseInt(text(id)));
+            clear();
+            loadList();
+            Toast.makeText(this, "Jenis ikan berhasil dihapus", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void clear() {
+        id.setText("");
+        nama.setText("");
+        kategori.setText("");
+        deskripsi.setText("");
+        gambarPath = "";
+        preview.setImageResource(R.drawable.catokan_banner);
+    }
+
     private void loadList() {
         list.removeAllViews();
-        String sql = "SELECT j.nama,j.kategori,j.deskripsi,j.gambar_path,IFNULL(s.total_kg,0) stok FROM jenis_ikan j LEFT JOIN stok_mentah s ON s.jenis_ikan_id=j.id ORDER BY j.nama";
+        String sql = "SELECT j.id,j.nama,j.kategori,j.deskripsi,j.gambar_path,IFNULL(s.total_kg,0) stok FROM jenis_ikan j LEFT JOIN stok_mentah s ON s.jenis_ikan_id=j.id AND s.owner_user_id=j.owner_user_id WHERE j.owner_user_id=" + DbHelper.currentUserId() + " AND j.aktif=1 ORDER BY j.nama";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
+                int rowId = c.getInt(0);
+                String rowNama = c.getString(1);
+                String rowKategori = c.getString(2);
+                String rowDeskripsi = c.getString(3);
+                String rowGambar = c.getString(4);
                 LinearLayout row = rowCard();
+                row.setOnClickListener(v -> fill(rowId, rowNama, rowKategori, rowDeskripsi, rowGambar));
                 ImageView img = new ImageView(this);
-                setImage(img, c.getString(3));
+                setImage(img, rowGambar);
                 row.addView(img, new LinearLayout.LayoutParams(dp(82), dp(82)));
                 LinearLayout text = column(0);
                 text.setPadding(dp(12), 0, 0, 0);
                 row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
-                smallTitle(text, c.getString(0));
-                body(text, c.getString(1) + " | Stok mentah " + kg(c.getDouble(4)));
-                body(text, c.getString(2));
+                smallTitle(text, rowNama);
+                body(text, rowKategori + " | Stok mentah " + kg(c.getDouble(5)));
+                body(text, rowDeskripsi);
                 list.addView(row);
             }
         }
+    }
+
+    private void fill(int rowId, String rowNama, String rowKategori, String rowDeskripsi, String rowGambar) {
+        id.setText(String.valueOf(rowId));
+        nama.setText(rowNama == null ? "" : rowNama);
+        kategori.setText(rowKategori == null ? "" : rowKategori);
+        deskripsi.setText(rowDeskripsi == null ? "" : rowDeskripsi);
+        gambarPath = rowGambar == null ? "" : rowGambar;
+        setImage(preview, gambarPath);
     }
 
     private LinearLayout rowCard() {

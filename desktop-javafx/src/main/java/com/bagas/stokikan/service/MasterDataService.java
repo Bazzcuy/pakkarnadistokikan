@@ -81,13 +81,37 @@ public class MasterDataService {
     }
 
     public void tambahJenisIkan(String nama, String kategori, String deskripsi, String gambarPath) {
+        simpanJenisIkan(null, nama, kategori, deskripsi, gambarPath);
+    }
+
+    public void simpanJenisIkan(Integer id, String nama, String kategori, String deskripsi, String gambarPath) {
         if (nama == null || nama.isBlank()) throw new IllegalArgumentException("Nama jenis ikan wajib diisi");
         try (var c = Database.connect()) {
-            Database.execute(c, "INSERT INTO jenis_ikan(nama,kategori,deskripsi,gambar_path,aktif) VALUES(?,?,?,?,1)",
-                    nama.trim(), blank(kategori, "Ikan"), blank(deskripsi, "Jenis ikan " + nama.trim()), blank(gambarPath, "/images/catokan_banner.png"));
-            Database.execute(c, "INSERT INTO stok_mentah(jenis_ikan_id,total_kg,updated_at) VALUES((SELECT id FROM jenis_ikan WHERE nama=?),0,datetime('now'))", nama.trim());
+            if (id == null) {
+                int rowId = Database.insertAndGetId(c, "INSERT INTO jenis_ikan(nama,kategori,deskripsi,gambar_path,aktif) VALUES(?,?,?,?,1)",
+                        nama.trim(), blank(kategori, "Ikan"), blank(deskripsi, "Jenis ikan " + nama.trim()), blank(gambarPath, "/images/catokan_banner.png"));
+                Database.execute(c, "INSERT INTO stok_mentah(jenis_ikan_id,total_kg,updated_at) VALUES(?,0,datetime('now'))", rowId);
+            } else {
+                Database.execute(c, "UPDATE jenis_ikan SET nama=?, kategori=?, deskripsi=?, gambar_path=? WHERE id=?",
+                        nama.trim(), blank(kategori, "Ikan"), blank(deskripsi, "Jenis ikan " + nama.trim()), blank(gambarPath, "/images/catokan_banner.png"), id);
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Gagal menambah jenis ikan: " + e.getMessage(), e);
+            throw new RuntimeException("Gagal menyimpan jenis ikan: " + e.getMessage(), e);
+        }
+    }
+
+    public void hapusJenisIkan(int id) {
+        boolean dipakai = !Database.query("SELECT id FROM stok_masuk WHERE jenis_ikan_id=? LIMIT 1", id).isEmpty()
+                || !Database.query("SELECT id FROM produksi_giling WHERE jenis_ikan_id=? LIMIT 1", id).isEmpty()
+                || !Database.query("SELECT id FROM detail_penjualan WHERE jenis_ikan_id=? LIMIT 1", id).isEmpty();
+        if (dipakai) {
+            throw new IllegalArgumentException("Jenis ikan sudah dipakai pada transaksi, tidak bisa dihapus. Ubah datanya saja.");
+        }
+        try (var c = Database.connect()) {
+            Database.execute(c, "DELETE FROM stok_mentah WHERE jenis_ikan_id=?", id);
+            Database.execute(c, "DELETE FROM jenis_ikan WHERE id=?", id);
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menghapus jenis ikan: " + e.getMessage(), e);
         }
     }
 

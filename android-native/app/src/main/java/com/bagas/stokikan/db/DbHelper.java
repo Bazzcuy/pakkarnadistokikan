@@ -23,7 +23,12 @@ import java.util.List;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "stok_ikan_giling_android.db";
-    private static final int DB_VERSION = 6;
+    private static final int DB_VERSION = 7;
+    private static int currentUserId = 1;
+    private static final String[] OWNER_TABLES = {
+            "jenis_ikan", "suppliers", "pelanggan", "stok_mentah", "stok_giling",
+            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "penyesuaian_stok", "riwayat_stok"
+    };
     private static final String[] TRANSFER_TABLES = {
             "users", "jenis_ikan", "suppliers", "pelanggan", "stok_mentah", "stok_giling",
             "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "penyesuaian_stok", "riwayat_stok"
@@ -33,21 +38,33 @@ public class DbHelper extends SQLiteOpenHelper {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
+    public static void setCurrentUserId(int userId) {
+        currentUserId = userId <= 0 ? 1 : userId;
+    }
+
+    public static int currentUserId() {
+        return currentUserId <= 0 ? 1 : currentUserId;
+    }
+
+    public static String ownerWhere(String alias) {
+        return (alias == null || alias.isEmpty() ? "owner_user_id" : alias + ".owner_user_id") + "=" + currentUserId();
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, nama_usaha TEXT, nomor_hp TEXT, alamat TEXT, status TEXT DEFAULT 'AKTIF')");
-        db.execSQL("CREATE TABLE jenis_ikan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT UNIQUE NOT NULL, kategori TEXT, deskripsi TEXT, gambar_path TEXT, aktif INTEGER DEFAULT 1)");
-        db.execSQL("CREATE TABLE suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, nomor_hp TEXT, alamat TEXT, catatan TEXT)");
-        db.execSQL("CREATE TABLE pelanggan (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT NOT NULL, nomor_hp TEXT, alamat TEXT, tipe_pelanggan TEXT)");
-        db.execSQL("CREATE TABLE stok_mentah (id INTEGER PRIMARY KEY AUTOINCREMENT, jenis_ikan_id INTEGER UNIQUE NOT NULL, total_kg REAL NOT NULL DEFAULT 0, updated_at TEXT)");
-        db.execSQL("CREATE TABLE stok_giling (id INTEGER PRIMARY KEY AUTOINCREMENT, jenis_ikan_id INTEGER NOT NULL, batch_no TEXT UNIQUE NOT NULL, total_kg REAL NOT NULL DEFAULT 0, harga_jual_per_kg REAL NOT NULL DEFAULT 0, tanggal_produksi TEXT, status_stok TEXT DEFAULT 'TERSEDIA')");
-        db.execSQL("CREATE TABLE stok_masuk (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER NOT NULL, supplier_id INTEGER NOT NULL, berat_kg REAL NOT NULL, harga_beli_per_kg REAL NOT NULL, total_beli REAL NOT NULL, catatan TEXT)");
-        db.execSQL("CREATE TABLE produksi_giling (id INTEGER PRIMARY KEY AUTOINCREMENT, batch_no TEXT UNIQUE NOT NULL, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER NOT NULL, berat_mentah_kg REAL NOT NULL, berat_hasil_kg REAL NOT NULL, penyusutan_kg REAL NOT NULL, biaya_produksi REAL DEFAULT 0, harga_jual_per_kg REAL NOT NULL, catatan TEXT)");
-        db.execSQL("CREATE TABLE penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, nomor_transaksi TEXT UNIQUE NOT NULL, tanggal TEXT NOT NULL, pelanggan_id INTEGER, kasir_id INTEGER, subtotal REAL NOT NULL, diskon REAL DEFAULT 0, total REAL NOT NULL, status_pembayaran TEXT NOT NULL)");
-        db.execSQL("CREATE TABLE detail_penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, stok_giling_id INTEGER NOT NULL, jenis_ikan_id INTEGER NOT NULL, jumlah_kg REAL NOT NULL, harga_per_kg REAL NOT NULL, subtotal REAL NOT NULL)");
-        db.execSQL("CREATE TABLE pembayaran (id INTEGER PRIMARY KEY AUTOINCREMENT, penjualan_id INTEGER NOT NULL, tanggal TEXT NOT NULL, metode TEXT NOT NULL, jumlah_bayar REAL NOT NULL, sisa_bayar REAL NOT NULL, status TEXT NOT NULL, catatan TEXT)");
-        db.execSQL("CREATE TABLE penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
-        db.execSQL("CREATE TABLE riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
+        db.execSQL("CREATE TABLE jenis_ikan (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, nama TEXT NOT NULL, kategori TEXT, deskripsi TEXT, gambar_path TEXT, aktif INTEGER DEFAULT 1, UNIQUE(owner_user_id,nama))");
+        db.execSQL("CREATE TABLE suppliers (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, nama TEXT NOT NULL, nomor_hp TEXT, alamat TEXT, catatan TEXT)");
+        db.execSQL("CREATE TABLE pelanggan (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, nama TEXT NOT NULL, nomor_hp TEXT, alamat TEXT, tipe_pelanggan TEXT)");
+        db.execSQL("CREATE TABLE stok_mentah (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, jenis_ikan_id INTEGER NOT NULL, total_kg REAL NOT NULL DEFAULT 0, updated_at TEXT, UNIQUE(owner_user_id,jenis_ikan_id))");
+        db.execSQL("CREATE TABLE stok_giling (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, jenis_ikan_id INTEGER NOT NULL, batch_no TEXT UNIQUE NOT NULL, total_kg REAL NOT NULL DEFAULT 0, harga_jual_per_kg REAL NOT NULL DEFAULT 0, tanggal_produksi TEXT, status_stok TEXT DEFAULT 'TERSEDIA')");
+        db.execSQL("CREATE TABLE stok_masuk (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER NOT NULL, supplier_id INTEGER NOT NULL, berat_kg REAL NOT NULL, harga_beli_per_kg REAL NOT NULL, total_beli REAL NOT NULL, catatan TEXT)");
+        db.execSQL("CREATE TABLE produksi_giling (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, batch_no TEXT UNIQUE NOT NULL, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER NOT NULL, berat_mentah_kg REAL NOT NULL, berat_hasil_kg REAL NOT NULL, penyusutan_kg REAL NOT NULL, biaya_produksi REAL DEFAULT 0, harga_jual_per_kg REAL NOT NULL, catatan TEXT)");
+        db.execSQL("CREATE TABLE penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, nomor_transaksi TEXT UNIQUE NOT NULL, tanggal TEXT NOT NULL, pelanggan_id INTEGER, kasir_id INTEGER, subtotal REAL NOT NULL, diskon REAL DEFAULT 0, total REAL NOT NULL, status_pembayaran TEXT NOT NULL)");
+        db.execSQL("CREATE TABLE detail_penjualan (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, penjualan_id INTEGER NOT NULL, stok_giling_id INTEGER NOT NULL, jenis_ikan_id INTEGER NOT NULL, jumlah_kg REAL NOT NULL, harga_per_kg REAL NOT NULL, subtotal REAL NOT NULL)");
+        db.execSQL("CREATE TABLE pembayaran (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, penjualan_id INTEGER NOT NULL, tanggal TEXT NOT NULL, metode TEXT NOT NULL, jumlah_bayar REAL NOT NULL, sisa_bayar REAL NOT NULL, status TEXT NOT NULL, catatan TEXT)");
+        db.execSQL("CREATE TABLE penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
+        db.execSQL("CREATE TABLE riwayat_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_user_id INTEGER DEFAULT 1, tanggal TEXT NOT NULL, jenis_ikan_id INTEGER, jenis_transaksi TEXT NOT NULL, jenis_stok TEXT NOT NULL, referensi TEXT, perubahan_kg REAL NOT NULL, stok_sebelum REAL NOT NULL, stok_sesudah REAL NOT NULL, keterangan TEXT)");
         seed(db);
     }
 
@@ -55,6 +72,12 @@ public class DbHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 6) {
             db.execSQL("CREATE TABLE IF NOT EXISTS penyesuaian_stok (id INTEGER PRIMARY KEY AUTOINCREMENT, tanggal TEXT NOT NULL, jenis_stok TEXT NOT NULL, stok_sistem REAL NOT NULL, stok_fisik REAL NOT NULL, selisih REAL NOT NULL, alasan TEXT)");
+        }
+        if (oldVersion < 7) {
+            for (String table : OWNER_TABLES) {
+                addColumn(db, table, "owner_user_id", "INTEGER DEFAULT 1");
+                db.execSQL("UPDATE " + table + " SET owner_user_id=1 WHERE owner_user_id IS NULL");
+            }
         }
         if (oldVersion < 5) {
             addColumn(db, "riwayat_stok", "jenis_ikan_id", "INTEGER");
@@ -93,6 +116,11 @@ public class DbHelper extends SQLiteOpenHelper {
         db.execSQL("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
     }
 
+    private ContentValues owned(ContentValues values) {
+        values.put("owner_user_id", currentUserId());
+        return values;
+    }
+
     private void seed(SQLiteDatabase db) {
         insertUser(db, "Pengguna CATOKAN", "pengguna", "pengguna123", "PENGGUNA");
 
@@ -103,7 +131,7 @@ public class DbHelper extends SQLiteOpenHelper {
             cv.put("kategori", "Ikan");
             cv.put("deskripsi", "Jenis ikan " + s);
             cv.put("gambar_path", "catokan_banner");
-            long id = db.insert("jenis_ikan", null, cv);
+            long id = db.insert("jenis_ikan", null, owned(cv));
             ContentValues stok = new ContentValues();
             stok.put("jenis_ikan_id", id);
             double totalKg;
@@ -117,7 +145,7 @@ public class DbHelper extends SQLiteOpenHelper {
             else totalKg = 41.0;
             stok.put("total_kg", totalKg);
             stok.put("updated_at", DateUtil.now());
-            db.insert("stok_mentah", null, stok);
+            db.insert("stok_mentah", null, owned(stok));
         }
 
         String[][] suppliers = {
@@ -138,7 +166,7 @@ public class DbHelper extends SQLiteOpenHelper {
             cv.put("nomor_hp", s[1]);
             cv.put("alamat", s[2]);
             cv.put("catatan", s[3]);
-            db.insert("suppliers", null, cv);
+            db.insert("suppliers", null, owned(cv));
         }
 
         String[][] pelanggan = {
@@ -161,7 +189,7 @@ public class DbHelper extends SQLiteOpenHelper {
             cv.put("nomor_hp", s[1]);
             cv.put("alamat", s[2]);
             cv.put("tipe_pelanggan", s[3]);
-            db.insert("pelanggan", null, cv);
+            db.insert("pelanggan", null, owned(cv));
         }
 
         ContentValues g1 = new ContentValues();
@@ -171,7 +199,7 @@ public class DbHelper extends SQLiteOpenHelper {
         g1.put("harga_jual_per_kg", 95000.0);
         g1.put("tanggal_produksi", DateUtil.today());
         g1.put("status_stok", "TERSEDIA");
-        db.insert("stok_giling", null, g1);
+        db.insert("stok_giling", null, owned(g1));
 
         ContentValues g2 = new ContentValues();
         g2.put("jenis_ikan_id", 2);
@@ -180,7 +208,7 @@ public class DbHelper extends SQLiteOpenHelper {
         g2.put("harga_jual_per_kg", 80000.0);
         g2.put("tanggal_produksi", DateUtil.today());
         g2.put("status_stok", "TERSEDIA");
-        db.insert("stok_giling", null, g2);
+        db.insert("stok_giling", null, owned(g2));
 
         seedGiling(db, 3, "BG-202606-003", 15.0, 72000.0, "2026-06-21");
         seedGiling(db, 4, "BG-202606-004", 18.0, 56000.0, "2026-06-22");
@@ -233,7 +261,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("harga_jual_per_kg", harga);
         cv.put("tanggal_produksi", tanggal);
         cv.put("status_stok", "TERSEDIA");
-        db.insert("stok_giling", null, cv);
+        db.insert("stok_giling", null, owned(cv));
     }
 
     private void seedStockIn(SQLiteDatabase db, String tanggal, int jenisId, int supplierId, double kg, double harga, String catatan) {
@@ -245,7 +273,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("harga_beli_per_kg", harga);
         cv.put("total_beli", kg * harga);
         cv.put("catatan", catatan);
-        db.insert("stok_masuk", null, cv);
+        db.insert("stok_masuk", null, owned(cv));
     }
 
     private void seedProduction(SQLiteDatabase db, String batch, String tanggal, int jenisId, double mentah, double hasil, double biaya, double hargaJual, String catatan) {
@@ -259,7 +287,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("biaya_produksi", biaya);
         cv.put("harga_jual_per_kg", hargaJual);
         cv.put("catatan", catatan);
-        db.insert("produksi_giling", null, cv);
+        db.insert("produksi_giling", null, owned(cv));
     }
 
     private void seedSale(SQLiteDatabase db, String nomor, String tanggal, int pelangganId, int kasirId, int stokGilingId, double kg, double bayar, String metode) {
@@ -279,7 +307,7 @@ public class DbHelper extends SQLiteOpenHelper {
         pj.put("diskon", 0);
         pj.put("total", total);
         pj.put("status_pembayaran", status);
-        long penjualanId = db.insert("penjualan", null, pj);
+        long penjualanId = db.insert("penjualan", null, owned(pj));
 
         ContentValues detail = new ContentValues();
         detail.put("penjualan_id", penjualanId);
@@ -288,7 +316,7 @@ public class DbHelper extends SQLiteOpenHelper {
         detail.put("jumlah_kg", kg);
         detail.put("harga_per_kg", harga);
         detail.put("subtotal", total);
-        db.insert("detail_penjualan", null, detail);
+        db.insert("detail_penjualan", null, owned(detail));
 
         ContentValues pay = new ContentValues();
         pay.put("penjualan_id", penjualanId);
@@ -298,7 +326,7 @@ public class DbHelper extends SQLiteOpenHelper {
         pay.put("sisa_bayar", sisa);
         pay.put("status", status);
         pay.put("catatan", "Pembayaran transaksi penjualan");
-        db.insert("pembayaran", null, pay);
+        db.insert("pembayaran", null, owned(pay));
 
         double after = stok - kg;
         ContentValues upd = new ContentValues();
@@ -316,7 +344,7 @@ public class DbHelper extends SQLiteOpenHelper {
         r.put("stok_sebelum", stok);
         r.put("stok_sesudah", after);
         r.put("keterangan", "Penjualan ikan giling");
-        db.insert("riwayat_stok", null, r);
+        db.insert("riwayat_stok", null, owned(r));
     }
 
     private double scalar(SQLiteDatabase db, String sql, String... args) {
@@ -377,6 +405,10 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void tambahJenisIkan(String nama, String kategori, String deskripsi, String gambarPath) {
+        simpanJenisIkan(null, nama, kategori, deskripsi, gambarPath);
+    }
+
+    public void simpanJenisIkan(Integer id, String nama, String kategori, String deskripsi, String gambarPath) {
         if (blank(nama)) throw new IllegalArgumentException("Nama jenis ikan wajib diisi.");
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -386,13 +418,34 @@ public class DbHelper extends SQLiteOpenHelper {
             cv.put("kategori", blank(kategori) ? "Ikan" : kategori.trim());
             cv.put("deskripsi", text(deskripsi));
             cv.put("gambar_path", text(gambarPath));
-            long id = db.insert("jenis_ikan", null, cv);
-            if (id < 0) throw new IllegalArgumentException("Jenis ikan sudah ada.");
-            ContentValues stok = new ContentValues();
-            stok.put("jenis_ikan_id", id);
-            stok.put("total_kg", 0);
-            stok.put("updated_at", DateUtil.now());
-            db.insert("stok_mentah", null, stok);
+            if (id == null) {
+                long newId = db.insert("jenis_ikan", null, owned(cv));
+                if (newId < 0) throw new IllegalArgumentException("Jenis ikan sudah ada.");
+                ContentValues stok = new ContentValues();
+                stok.put("jenis_ikan_id", newId);
+                stok.put("total_kg", 0);
+                stok.put("updated_at", DateUtil.now());
+                db.insert("stok_mentah", null, owned(stok));
+            } else {
+                db.update("jenis_ikan", cv, "id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public void hapusJenisIkan(int id) {
+        if (scalar("SELECT COUNT(*) FROM stok_masuk WHERE jenis_ikan_id=? AND owner_user_id=?", String.valueOf(id), String.valueOf(currentUserId())) > 0 ||
+                scalar("SELECT COUNT(*) FROM produksi_giling WHERE jenis_ikan_id=? AND owner_user_id=?", String.valueOf(id), String.valueOf(currentUserId())) > 0 ||
+                scalar("SELECT COUNT(*) FROM detail_penjualan WHERE jenis_ikan_id=? AND owner_user_id=?", String.valueOf(id), String.valueOf(currentUserId())) > 0) {
+            throw new IllegalArgumentException("Jenis ikan sudah dipakai pada transaksi. Ubah datanya saja.");
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.delete("stok_mentah", "jenis_ikan_id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
+            db.delete("jenis_ikan", "id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -406,15 +459,15 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("nomor_hp", text(hp));
         cv.put("alamat", text(alamat));
         cv.put("catatan", text(catatan));
-        if (id == null) getWritableDatabase().insert("suppliers", null, cv);
-        else getWritableDatabase().update("suppliers", cv, "id=?", new String[]{String.valueOf(id)});
+        if (id == null) getWritableDatabase().insert("suppliers", null, owned(cv));
+        else getWritableDatabase().update("suppliers", cv, "id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
     }
 
     public void hapusSupplier(int id) {
-        if (scalar("SELECT COUNT(*) FROM stok_masuk WHERE supplier_id=?", String.valueOf(id)) > 0) {
+        if (scalar("SELECT COUNT(*) FROM stok_masuk WHERE supplier_id=? AND owner_user_id=?", String.valueOf(id), String.valueOf(currentUserId())) > 0) {
             throw new IllegalArgumentException("Supplier sudah dipakai pada stok masuk, tidak bisa dihapus.");
         }
-        getWritableDatabase().delete("suppliers", "id=?", new String[]{String.valueOf(id)});
+        getWritableDatabase().delete("suppliers", "id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
     }
 
     public void simpanPelanggan(Integer id, String nama, String hp, String alamat, String tipe) {
@@ -424,15 +477,15 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("nomor_hp", text(hp));
         cv.put("alamat", text(alamat));
         cv.put("tipe_pelanggan", blank(tipe) ? "Retail" : tipe.trim());
-        if (id == null) getWritableDatabase().insert("pelanggan", null, cv);
-        else getWritableDatabase().update("pelanggan", cv, "id=?", new String[]{String.valueOf(id)});
+        if (id == null) getWritableDatabase().insert("pelanggan", null, owned(cv));
+        else getWritableDatabase().update("pelanggan", cv, "id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
     }
 
     public void hapusPelanggan(int id) {
-        if (scalar("SELECT COUNT(*) FROM penjualan WHERE pelanggan_id=?", String.valueOf(id)) > 0) {
+        if (scalar("SELECT COUNT(*) FROM penjualan WHERE pelanggan_id=? AND owner_user_id=?", String.valueOf(id), String.valueOf(currentUserId())) > 0) {
             throw new IllegalArgumentException("Pelanggan sudah dipakai pada penjualan, tidak bisa dihapus.");
         }
-        getWritableDatabase().delete("pelanggan", "id=?", new String[]{String.valueOf(id)});
+        getWritableDatabase().delete("pelanggan", "id=? AND owner_user_id=?", new String[]{String.valueOf(id), String.valueOf(currentUserId())});
     }
 
     public Cursor rawQuery(String sql, String... args) {
@@ -441,7 +494,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public List<OptionItem> options(String table) {
         String label = table.equals("stok_giling") ? "(SELECT nama FROM jenis_ikan WHERE id=stok_giling.jenis_ikan_id) || ' - produksi ' || tanggal_produksi || ' - ' || total_kg || ' kg'" : "nama";
-        String sql = "SELECT id, " + label + " AS label FROM " + table + (table.equals("stok_giling") ? " WHERE total_kg>0" : "") + " ORDER BY id";
+        String where = " WHERE owner_user_id=" + currentUserId() + (table.equals("stok_giling") ? " AND total_kg>0" : "");
+        String sql = "SELECT id, " + label + " AS label FROM " + table + where + " ORDER BY id";
         List<OptionItem> list = new ArrayList<>();
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) list.add(new OptionItem(c.getInt(0), c.getString(1)));
@@ -451,7 +505,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public List<OptionItem> transaksiBerhasil() {
         List<OptionItem> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.nomor_transaksi || ' - ' || IFNULL(pl.nama,'Pelanggan') || ' - Rp ' || p.total AS label FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE p.status_pembayaran='LUNAS' ORDER BY p.id DESC";
+        String sql = "SELECT p.id, p.nomor_transaksi || ' - ' || IFNULL(pl.nama,'Pelanggan') || ' - Rp ' || p.total AS label FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE p.status_pembayaran='LUNAS' AND p.owner_user_id=" + currentUserId() + " ORDER BY p.id DESC";
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) list.add(new OptionItem(c.getInt(0), c.getString(1)));
         }
@@ -461,15 +515,15 @@ public class DbHelper extends SQLiteOpenHelper {
     public String dashboardText() {
         return "DASHBOARD CATOKAN\n" +
                 "================\n\n" +
-                "Total stok mentah  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg\n" +
-                "Total stok giling  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg\n" +
-                "Total penjualan    : Rp " + scalar("SELECT IFNULL(SUM(total),0) FROM penjualan") + "\n" +
-                "Stok giling lama   : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')") + " kg\n";
+                "Total stok mentah  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah WHERE owner_user_id=" + currentUserId()) + " kg\n" +
+                "Total stok giling  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE owner_user_id=" + currentUserId()) + " kg\n" +
+                "Total penjualan    : Rp " + scalar("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE owner_user_id=" + currentUserId()) + "\n" +
+                "Stok giling lama   : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day') AND owner_user_id=" + currentUserId()) + " kg\n";
     }
 
     public String stokMentahText() {
         StringBuilder sb = new StringBuilder("STOK IKAN MENTAH\n================\n\n");
-        String sql = "SELECT j.nama, s.total_kg FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id ORDER BY j.nama";
+        String sql = "SELECT j.nama, s.total_kg FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id AND j.owner_user_id=s.owner_user_id WHERE s.owner_user_id=" + currentUserId() + " ORDER BY j.nama";
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) sb.append(c.getString(0)).append(" : ").append(c.getDouble(1)).append(" kg\n");
         }
@@ -478,7 +532,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public String stokGilingText() {
         StringBuilder sb = new StringBuilder("STOK IKAN GILING PER BATCH\n==========================\n\n");
-        String sql = "SELECT g.id,g.batch_no,j.nama,g.total_kg,g.harga_jual_per_kg FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC";
+        String sql = "SELECT g.id,g.batch_no,j.nama,g.total_kg,g.harga_jual_per_kg FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id AND j.owner_user_id=g.owner_user_id WHERE g.owner_user_id=" + currentUserId() + " ORDER BY g.id DESC";
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) sb.append("ID ").append(c.getInt(0)).append(" | ").append(c.getString(1)).append(" | ").append(c.getString(2)).append(" | ").append(c.getDouble(3)).append(" kg | Rp ").append(c.getDouble(4)).append("/kg\n");
         }

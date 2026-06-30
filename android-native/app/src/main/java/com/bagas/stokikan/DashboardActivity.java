@@ -39,10 +39,11 @@ public class DashboardActivity extends Activity {
     }
 
     private void bindStats() {
-        ((TextView) findViewById(R.id.txtStokMentah)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah")));
-        ((TextView) findViewById(R.id.txtStokGiling)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling")));
-        ((TextView) findViewById(R.id.txtTotalJual)).setText("Rp " + money(db.scalar("SELECT IFNULL(SUM(total),0) FROM penjualan")));
-        ((TextView) findViewById(R.id.txtStokLama)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')")));
+        String owner = " owner_user_id=" + DbHelper.currentUserId();
+        ((TextView) findViewById(R.id.txtStokMentah)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah WHERE" + owner)));
+        ((TextView) findViewById(R.id.txtStokGiling)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE" + owner)));
+        ((TextView) findViewById(R.id.txtTotalJual)).setText("Rp " + money(db.scalar("SELECT IFNULL(SUM(total),0) FROM penjualan WHERE" + owner)));
+        ((TextView) findViewById(R.id.txtStokLama)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day') AND owner_user_id=" + DbHelper.currentUserId())));
     }
 
     private void bindMenus() {

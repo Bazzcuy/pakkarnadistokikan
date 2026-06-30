@@ -42,6 +42,7 @@ public class LoginActivity extends Activity {
             Toast.makeText(this, "Login gagal. Periksa username dan password.", Toast.LENGTH_LONG).show();
             return;
         }
+        DbHelper.setCurrentUserId(user.id);
         Intent intent = new Intent(this, DashboardActivity.class);
         AppNav.putUser(intent, user);
         startActivity(intent);

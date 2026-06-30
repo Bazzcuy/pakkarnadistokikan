@@ -31,6 +31,7 @@ public class ProductionActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppNav.readUser(this);
         setContentView(R.layout.activity_production);
         db = new DbHelper(this);
         service = new StockService(db);
