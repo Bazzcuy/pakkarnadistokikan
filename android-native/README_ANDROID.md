@@ -19,25 +19,23 @@ Project root sudah punya workflow:
 
 Setelah dipush ke GitHub, buka tab `Actions`, jalankan `Build Android Debug APK`, lalu download artifact `CATOKAN-debug-apk`.
 
-## Akun Demo
-- Admin: `admin / admin123`
-- Kasir: `kasir / kasir123`
-- Operator: `operator / operator123`
+## Akun Awal
+- Pengguna: `pengguna / pengguna123`
 
 ## Struktur UI
 - `SplashActivity`: pembuka aplikasi.
 - `OnboardingActivity`: pengenalan singkat aplikasi.
-- `LoginActivity`: login dan tombol demo cepat.
-- `DashboardActivity`: statistik, menu utama, dan shortcut bottom navigation sederhana.
+- `LoginActivity`: login pengguna dan akses daftar akun.
+- `DashboardActivity`: statistik, menu utama, export/import data, dan shortcut bottom navigation sederhana.
 - `RawStockActivity`: input stok mentah.
 - `ProductionActivity`: produksi ikan giling.
-- `SalesActivity`: penjualan cepat.
-- `TextActivity`: tampilan stok/laporan teks.
+- `SalesActivity`: penjualan FIFO wajib lunas.
+- `TextActivity`: tampilan stok/laporan detail.
 
 ## Catatan UI
 UI sudah dibuat lebih proper menggunakan XML layout dan drawable resource. Sistem tetap tidak overkill karena fitur bisnisnya masih fokus pada stok, produksi, transaksi, dan laporan ringkas.
 
 ## Catatan Sistem
 - Database dibuat otomatis saat aplikasi pertama dibuka.
-- Password demo disimpan sebagai hash SHA-256 pada database baru.
-- Data dummy dibuat cukup banyak untuk simulasi stok, produksi, penjualan, dan pembayaran.
+- Password pengguna disimpan sebagai hash SHA-256 pada database baru.
+- Data awal dibuat cukup banyak untuk simulasi stok, produksi, penjualan, dan laporan.

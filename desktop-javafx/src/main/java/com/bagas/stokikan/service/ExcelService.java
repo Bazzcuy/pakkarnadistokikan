@@ -28,10 +28,10 @@ public class ExcelService {
             CellStyle money = wb.createCellStyle();
             money.setDataFormat(wb.createDataFormat().getFormat("\"Rp\" #,##0"));
             writeKeyValueSheet(wb, "Ringkasan", List.of(
-                    new String[]{"Total Stok Mentah (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah")},
-                    new String[]{"Total Stok Giling (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling")},
-                    new String[]{"Total Penjualan", scalar("SELECT IFNULL(SUM(total),0) FROM penjualan")},
-                    new String[]{"Sisa Belum Lunas", scalar("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) AS bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS'")}
+                    new String[]{"Total Stok Mentah (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_mentah")},
+                    new String[]{"Total Stok Giling (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling")},
+                    new String[]{"Total Penjualan Lunas", scalar("SELECT IFNULL(SUM(total),0) AS v FROM penjualan")},
+                    new String[]{"Stok Giling Lama FIFO (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')")}
             ), header);
             writeTable(wb, "Stok Mentah", header, Database.query("SELECT j.nama AS jenis_ikan, s.total_kg, s.updated_at FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id ORDER BY j.nama"));
             writeTable(wb, "Stok Giling", header, Database.query("SELECT g.batch_no, j.nama AS jenis_ikan, g.total_kg, g.harga_jual_per_kg, g.tanggal_produksi, g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC"));

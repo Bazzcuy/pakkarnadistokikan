@@ -24,7 +24,7 @@ public class SalesActivity extends Activity {
     private StockService service;
     private User user;
     private Spinner pelanggan;
-    private Spinner batch;
+    private Spinner jenis;
     private EditText kg;
     private EditText metode;
     private EditText bayar;
@@ -37,13 +37,13 @@ public class SalesActivity extends Activity {
         db = new DbHelper(this);
         service = new StockService(db);
         pelanggan = findViewById(R.id.spPelanggan);
-        batch = findViewById(R.id.spBatch);
+        jenis = findViewById(R.id.spBatch);
         kg = findViewById(R.id.edtKg);
         metode = findViewById(R.id.edtMetode);
         bayar = findViewById(R.id.edtBayar);
         metode.setText("Tunai");
         bindSpinner(pelanggan, db.options("pelanggan"));
-        bindSpinner(batch, db.options("stok_giling"));
+        bindSpinner(jenis, db.options("jenis_ikan"));
         findViewById(R.id.btnSave).setOnClickListener(v -> save());
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
@@ -51,8 +51,8 @@ public class SalesActivity extends Activity {
     private void save() {
         try {
             OptionItem p = (OptionItem) pelanggan.getSelectedItem();
-            OptionItem b = (OptionItem) batch.getSelectedItem();
-            String result = service.jualCepat(user, p.id, b.id, toDouble(kg), metode.getText().toString(), toDoubleZero(bayar));
+            OptionItem j = (OptionItem) jenis.getSelectedItem();
+            String result = service.jualFifo(user, p.id, j.id, toDouble(kg), metode.getText().toString(), toDoubleZero(bayar));
             Toast.makeText(this, result, Toast.LENGTH_LONG).show();
             finish();
         } catch (Exception e) {

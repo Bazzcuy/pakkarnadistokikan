@@ -43,6 +43,8 @@ public class Database {
         addColumnIfMissing(c, "riwayat_stok", "jenis_ikan_id", "INTEGER");
         execute(c, "UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");
         execute(c, "UPDATE riwayat_stok SET jenis_ikan_id=(SELECT d.jenis_ikan_id FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id WHERE p.nomor_transaksi=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'TRX-%'");
+        execute(c, "UPDATE penjualan SET status_pembayaran='LUNAS' WHERE status_pembayaran='BELUM_LUNAS'");
+        execute(c, "UPDATE pembayaran SET sisa_bayar=0,status='LUNAS',catatan='Pembayaran lunas' WHERE status='BELUM_LUNAS'");
     }
 
     private static void addColumnIfMissing(Connection c, String table, String column, String type) throws SQLException {
@@ -157,11 +159,11 @@ public class Database {
             seedSale(c, "TRX-202606-002", "2026-06-24", 2, 2, 3, 4.5, 200000.0, "Transfer");
             seedSale(c, "TRX-202606-003", "2026-06-25", 4, 2, 4, 6.0, 336000.0, "Tunai");
             seedSale(c, "TRX-202606-004", "2026-06-25", 6, 2, 6, 7.0, 686000.0, "Transfer");
-            seedSale(c, "TRX-202606-005", "2026-06-26", 8, 2, 5, 1.5, 0.0, "Tempo");
+            seedSale(c, "TRX-202606-005", "2026-06-26", 8, 2, 5, 1.5, 63000.0, "Tunai");
             seedSale(c, "TRX-202606-006", "2026-06-26", 9, 2, 2, 3.0, 240000.0, "Tunai");
             seedSale(c, "TRX-202606-007", "2026-06-26", 10, 2, 7, 4.0, 208000.0, "Transfer");
             seedSale(c, "TRX-202606-008", "2026-06-27", 11, 2, 8, 5.0, 300000.0, "Tunai");
-            seedSale(c, "TRX-202606-009", "2026-06-27", 12, 2, 9, 2.5, 50000.0, "Tempo");
+            seedSale(c, "TRX-202606-009", "2026-06-27", 12, 2, 9, 2.5, 105000.0, "Transfer");
             seedSale(c, "TRX-202606-010", "2026-06-27", 3, 2, 10, 2.0, 148000.0, "Transfer");
             seedSale(c, "TRX-202606-011", "2026-06-28", 5, 2, 1, 4.0, 380000.0, "Tunai");
             seedSale(c, "TRX-202606-012", "2026-06-28", 7, 2, 6, 3.0, 200000.0, "Transfer");
@@ -173,11 +175,12 @@ public class Database {
         double harga = scalarDouble(c, "SELECT harga_jual_per_kg FROM stok_giling WHERE id=?", stokGilingId);
         int jenisId = (int) scalarDouble(c, "SELECT jenis_ikan_id FROM stok_giling WHERE id=?", stokGilingId);
         double total = kg * harga;
-        double sisa = total - bayar;
-        String status = sisa <= 0 ? "LUNAS" : "BELUM_LUNAS";
+        double bayarFinal = total;
+        double sisa = 0;
+        String status = "LUNAS";
         int penjualanId = insertAndGetId(c, "INSERT INTO penjualan(nomor_transaksi,tanggal,pelanggan_id,kasir_id,subtotal,diskon,total,status_pembayaran) VALUES(?,?,?,?,?,?,?,?)", nomor, tanggal, pelangganId, kasirId, total, 0, total, status);
         insertAndGetId(c, "INSERT INTO detail_penjualan(penjualan_id,stok_giling_id,jenis_ikan_id,jumlah_kg,harga_per_kg,subtotal) VALUES(?,?,?,?,?,?)", penjualanId, stokGilingId, jenisId, kg, harga, total);
-        insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", penjualanId, tanggal, metode, bayar, sisa, status, "Pembayaran transaksi penjualan");
+        insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", penjualanId, tanggal, metode, bayarFinal, sisa, status, "Pembayaran transaksi penjualan");
         double after = stok - kg;
         execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", after, after <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
         execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", tanggal + " 10:00:00", jenisId, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan ikan giling");

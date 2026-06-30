@@ -1,6 +1,7 @@
 package com.bagas.stokikan.service;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.bagas.stokikan.db.DbHelper;
@@ -100,9 +101,11 @@ public class StockService {
             double harga = dbh.scalar("SELECT harga_jual_per_kg FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
             int jenisId = (int) dbh.scalar("SELECT jenis_ikan_id FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
             double total = kg * harga;
+            if (bayar > 0 && bayar < total) throw new IllegalArgumentException("Pembayaran harus lunas. Total transaksi: Rp " + total);
             if (bayar > total) throw new IllegalArgumentException("Pembayaran tidak boleh melebihi total transaksi");
-            double sisa = Math.max(total - bayar, 0);
-            String status = sisa <= 0 ? "LUNAS" : "BELUM_LUNAS";
+            double bayarFinal = total;
+            double sisa = 0;
+            String status = "LUNAS";
             String nomor = DateUtil.trxNo(dbh.nextId("penjualan"));
 
             ContentValues pj = new ContentValues();
@@ -129,7 +132,7 @@ public class StockService {
             pay.put("penjualan_id", idPenjualan);
             pay.put("tanggal", DateUtil.today());
             pay.put("metode", metode);
-            pay.put("jumlah_bayar", bayar);
+            pay.put("jumlah_bayar", bayarFinal);
             pay.put("sisa_bayar", sisa);
             pay.put("status", status);
             pay.put("catatan", "Pembayaran saat transaksi");
@@ -143,6 +146,95 @@ public class StockService {
             riwayat(db, jenisId, "PENJUALAN", "GILING", nomor, -kg, stok, after, "Penjualan ikan giling");
             db.setTransactionSuccessful();
             return nomor + " | Total Rp " + total + " | " + status;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public String jualFifo(User user, int pelangganId, int jenisIkanId, double kg, String metode, double bayar) {
+        if (kg <= 0) throw new IllegalArgumentException("Jumlah kg harus lebih dari 0");
+        if (bayar < 0) throw new IllegalArgumentException("Pembayaran tidak boleh negatif");
+        if (metode == null || metode.trim().isEmpty()) throw new IllegalArgumentException("Metode bayar wajib diisi");
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            double tersedia = dbh.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE jenis_ikan_id=? AND total_kg>0", String.valueOf(jenisIkanId));
+            if (tersedia < kg) throw new IllegalArgumentException("Stok giling tidak cukup. Tersedia: " + tersedia + " kg");
+            String nomor = DateUtil.trxNo(dbh.nextId("penjualan"));
+            double sisaAmbil = kg;
+            double total = 0;
+
+            Cursor cursor = db.rawQuery("SELECT id,batch_no,total_kg,harga_jual_per_kg FROM stok_giling WHERE jenis_ikan_id=? AND total_kg>0 ORDER BY date(tanggal_produksi), id", new String[]{String.valueOf(jenisIkanId)});
+            try {
+                while (cursor.moveToNext() && sisaAmbil > 0) {
+                    double stokBatch = cursor.getDouble(2);
+                    double ambil = Math.min(stokBatch, sisaAmbil);
+                    double harga = cursor.getDouble(3);
+                    total += ambil * harga;
+                    sisaAmbil -= ambil;
+                }
+            } finally {
+                cursor.close();
+            }
+
+            if (bayar > 0 && bayar < total) throw new IllegalArgumentException("Pembayaran harus lunas. Total transaksi: Rp " + total);
+            if (bayar > total) throw new IllegalArgumentException("Pembayaran tidak boleh melebihi total transaksi");
+
+            ContentValues pj = new ContentValues();
+            pj.put("nomor_transaksi", nomor);
+            pj.put("tanggal", DateUtil.today());
+            pj.put("pelanggan_id", pelangganId);
+            pj.put("kasir_id", user.id);
+            pj.put("subtotal", total);
+            pj.put("diskon", 0);
+            pj.put("total", total);
+            pj.put("status_pembayaran", "LUNAS");
+            long idPenjualan = db.insert("penjualan", null, pj);
+
+            ContentValues pay = new ContentValues();
+            pay.put("penjualan_id", idPenjualan);
+            pay.put("tanggal", DateUtil.today());
+            pay.put("metode", metode.trim());
+            pay.put("jumlah_bayar", total);
+            pay.put("sisa_bayar", 0);
+            pay.put("status", "LUNAS");
+            pay.put("catatan", "Pembayaran lunas saat transaksi");
+            db.insert("pembayaran", null, pay);
+
+            int jumlahBatch = 0;
+            sisaAmbil = kg;
+            cursor = db.rawQuery("SELECT id,batch_no,total_kg,harga_jual_per_kg FROM stok_giling WHERE jenis_ikan_id=? AND total_kg>0 ORDER BY date(tanggal_produksi), id", new String[]{String.valueOf(jenisIkanId)});
+            try {
+                while (cursor.moveToNext() && sisaAmbil > 0) {
+                    int stokGilingId = cursor.getInt(0);
+                    String batchNo = cursor.getString(1);
+                    double stokBatch = cursor.getDouble(2);
+                    double harga = cursor.getDouble(3);
+                    double ambil = Math.min(stokBatch, sisaAmbil);
+                    double after = stokBatch - ambil;
+
+                    ContentValues detail = new ContentValues();
+                    detail.put("penjualan_id", idPenjualan);
+                    detail.put("stok_giling_id", stokGilingId);
+                    detail.put("jenis_ikan_id", jenisIkanId);
+                    detail.put("jumlah_kg", ambil);
+                    detail.put("harga_per_kg", harga);
+                    detail.put("subtotal", ambil * harga);
+                    db.insert("detail_penjualan", null, detail);
+
+                    ContentValues upd = new ContentValues();
+                    upd.put("total_kg", after);
+                    upd.put("status_stok", after <= 0 ? "HABIS" : "TERSEDIA");
+                    db.update("stok_giling", upd, "id=?", new String[]{String.valueOf(stokGilingId)});
+                    riwayat(db, jenisIkanId, "PENJUALAN_FIFO", "GILING", nomor, -ambil, stokBatch, after, "FIFO otomatis dari batch " + batchNo);
+                    sisaAmbil -= ambil;
+                    jumlahBatch++;
+                }
+            } finally {
+                cursor.close();
+            }
+            db.setTransactionSuccessful();
+            return nomor + " | FIFO " + jumlahBatch + " batch | Total Rp " + total + " | LUNAS";
         } finally {
             db.endTransaction();
         }

@@ -42,6 +42,7 @@ public class DashboardActivity extends Activity {
         ((TextView) findViewById(R.id.txtStokMentah)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah")));
         ((TextView) findViewById(R.id.txtStokGiling)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling")));
         ((TextView) findViewById(R.id.txtTotalJual)).setText("Rp " + money(db.scalar("SELECT IFNULL(SUM(total),0) FROM penjualan")));
+        ((TextView) findViewById(R.id.txtStokLama)).setText(formatKg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')")));
     }
 
     private void bindMenus() {
@@ -64,6 +65,7 @@ public class DashboardActivity extends Activity {
         findViewById(R.id.btnFishMaster).setOnClickListener(v -> AppNav.open(this, FishMasterActivity.class, user));
         findViewById(R.id.btnSupplier).setOnClickListener(v -> openPartner("supplier"));
         findViewById(R.id.btnCustomer).setOnClickListener(v -> openPartner("customer"));
+        findViewById(R.id.btnTransferData).setOnClickListener(v -> AppNav.open(this, DataTransferActivity.class, user));
         rawInput.setOnClickListener(v -> AppNav.open(this, RawStockActivity.class, user));
         production.setOnClickListener(v -> AppNav.open(this, ProductionActivity.class, user));
         sales.setOnClickListener(v -> AppNav.open(this, SalesActivity.class, user));

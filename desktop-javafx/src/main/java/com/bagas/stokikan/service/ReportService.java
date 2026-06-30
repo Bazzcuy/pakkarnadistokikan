@@ -7,13 +7,13 @@ public class ReportService {
         var totalMentah = Database.query("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_mentah").get(0).get("v");
         var totalGiling = Database.query("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling").get(0).get("v");
         var totalJual = Database.query("SELECT IFNULL(SUM(total),0) AS v FROM penjualan").get(0).get("v");
-        var piutang = Database.query("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) AS v FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) AS bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS'").get(0).get("v");
+        var stokLama = Database.query("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')").get(0).get("v");
         return "DASHBOARD CATOKAN\n" +
                 "================\n\n" +
                 String.format("%-26s : %s kg\n", "Total stok mentah", totalMentah) +
                 String.format("%-26s : %s kg\n", "Total stok giling", totalGiling) +
-                String.format("%-26s : Rp %s\n", "Total nilai penjualan", totalJual) +
-                String.format("%-26s : Rp %s\n\n", "Sisa belum lunas", piutang) +
+                String.format("%-26s : Rp %s\n", "Total penjualan lunas", totalJual) +
+                String.format("%-26s : %s kg\n\n", "Stok lama FIFO", stokLama) +
                 "Akun awal pengguna: pengguna/pengguna123";
     }
 

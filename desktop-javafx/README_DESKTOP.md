@@ -17,16 +17,15 @@ Untuk presentasi PBO, jalankan via Maven/IDE agar source code dan struktur OOP m
 ```
 
 ## Fitur
-- Login role
+- Login pengguna
 - Dashboard
 - Input stok ikan mentah
 - Proses produksi ikan giling
-- Stok giling per batch
-- Transaksi penjualan
-- Pembayaran
+- Stok giling per batch dengan prioritas FIFO
+- Transaksi penjualan wajib lunas
 - Laporan ringkas
 
 ## Catatan Sistem
 - Database SQLite dibuat otomatis saat aplikasi pertama dijalankan.
-- Password demo disimpan sebagai hash SHA-256 pada database baru.
-- Service stok, produksi, penjualan, dan pembayaran memakai transaksi database.
+- Password pengguna disimpan sebagai hash SHA-256 pada database baru.
+- Service stok, produksi, dan penjualan memakai transaksi database.

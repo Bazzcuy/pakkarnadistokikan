@@ -5,8 +5,64 @@ import com.bagas.stokikan.model.User;
 import com.bagas.stokikan.util.DateUtil;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SalesService {
+    public String jualFifo(User kasir, int pelangganId, int jenisIkanId, double jumlahKg, String metode, double jumlahBayar) {
+        if (jumlahKg <= 0) throw new IllegalArgumentException("Jumlah kg harus lebih dari 0");
+        if (jumlahBayar < 0) throw new IllegalArgumentException("Jumlah bayar tidak boleh negatif");
+        if (metode == null || metode.isBlank()) throw new IllegalArgumentException("Metode bayar wajib diisi");
+        try (Connection c = Database.connect()) {
+            c.setAutoCommit(false);
+            try {
+                double tersedia = Database.scalarDouble(c, "SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE jenis_ikan_id=? AND total_kg>0", jenisIkanId);
+                if (tersedia < jumlahKg) throw new IllegalArgumentException("Stok giling tidak cukup. Stok tersedia: " + tersedia + " kg");
+
+                List<AlokasiFifo> alokasi = new ArrayList<>();
+                double sisaAmbil = jumlahKg;
+                double total = 0;
+                try (PreparedStatement ps = c.prepareStatement("SELECT id,batch_no,total_kg,harga_jual_per_kg FROM stok_giling WHERE jenis_ikan_id=? AND total_kg>0 ORDER BY date(tanggal_produksi), id")) {
+                    ps.setInt(1, jenisIkanId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next() && sisaAmbil > 0) {
+                            double stokBatch = rs.getDouble("total_kg");
+                            double ambil = Math.min(stokBatch, sisaAmbil);
+                            double harga = rs.getDouble("harga_jual_per_kg");
+                            alokasi.add(new AlokasiFifo(rs.getInt("id"), rs.getString("batch_no"), ambil, harga, stokBatch, stokBatch - ambil));
+                            total += ambil * harga;
+                            sisaAmbil -= ambil;
+                        }
+                    }
+                }
+
+                if (jumlahBayar > 0 && jumlahBayar < total) throw new IllegalArgumentException("Pembayaran harus lunas. Total transaksi: Rp " + total);
+                if (jumlahBayar > total) throw new IllegalArgumentException("Jumlah bayar tidak boleh melebihi total transaksi");
+                double bayarFinal = total;
+                String nomor = DateUtil.transactionNumber(Database.nextId(c, "penjualan"));
+                int idPenjualan = Database.insertAndGetId(c, "INSERT INTO penjualan(nomor_transaksi,tanggal,pelanggan_id,kasir_id,subtotal,diskon,total,status_pembayaran) VALUES(?,?,?,?,?,?,?,?)", nomor, DateUtil.today(), pelangganId, kasir.getId(), total, 0, total, "LUNAS");
+                Database.insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", idPenjualan, DateUtil.today(), metode.trim(), bayarFinal, 0, "LUNAS", "Pembayaran lunas saat transaksi");
+
+                for (AlokasiFifo a : alokasi) {
+                    Database.insertAndGetId(c, "INSERT INTO detail_penjualan(penjualan_id,stok_giling_id,jenis_ikan_id,jumlah_kg,harga_per_kg,subtotal) VALUES(?,?,?,?,?,?)", idPenjualan, a.stokGilingId, jenisIkanId, a.jumlahKg, a.hargaPerKg, a.jumlahKg * a.hargaPerKg);
+                    Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", a.stokSesudah, a.stokSesudah <= 0 ? "HABIS" : "TERSEDIA", a.stokGilingId);
+                    Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENJUALAN_FIFO", "GILING", nomor, -a.jumlahKg, a.stokSebelum, a.stokSesudah, "FIFO otomatis dari batch " + a.batchNo);
+                }
+                c.commit();
+                return nomor + " | FIFO " + alokasi.size() + " batch | Total: Rp " + total + " | LUNAS";
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal menyimpan penjualan FIFO: " + e.getMessage(), e);
+        }
+    }
+
     public String jualCepat(User kasir, int pelangganId, int stokGilingId, double jumlahKg, String metode, double jumlahBayar) {
         if (jumlahKg <= 0) throw new IllegalArgumentException("Jumlah kg harus lebih dari 0");
         if (jumlahBayar < 0) throw new IllegalArgumentException("Jumlah bayar tidak boleh negatif");
@@ -17,14 +73,16 @@ public class SalesService {
             double harga = Database.scalarDouble(c, "SELECT harga_jual_per_kg FROM stok_giling WHERE id=?", stokGilingId);
             double jenis = Database.scalarDouble(c, "SELECT jenis_ikan_id FROM stok_giling WHERE id=?", stokGilingId);
             double total = jumlahKg * harga;
+            if (jumlahBayar > 0 && jumlahBayar < total) throw new IllegalArgumentException("Pembayaran harus lunas. Total transaksi: Rp " + total);
             if (jumlahBayar > total) throw new IllegalArgumentException("Jumlah bayar tidak boleh melebihi total transaksi");
-            double sisa = Math.max(total - jumlahBayar, 0);
-            String status = sisa <= 0 ? "LUNAS" : "BELUM_LUNAS";
+            double jumlahBayarFinal = total;
+            double sisa = 0;
+            String status = "LUNAS";
             String nomor = DateUtil.transactionNumber(Database.nextId(c, "penjualan"));
             try {
                 int idPenjualan = Database.insertAndGetId(c, "INSERT INTO penjualan(nomor_transaksi,tanggal,pelanggan_id,kasir_id,subtotal,diskon,total,status_pembayaran) VALUES(?,?,?,?,?,?,?,?)", nomor, DateUtil.today(), pelangganId, kasir.getId(), total, 0, total, status);
                 Database.insertAndGetId(c, "INSERT INTO detail_penjualan(penjualan_id,stok_giling_id,jenis_ikan_id,jumlah_kg,harga_per_kg,subtotal) VALUES(?,?,?,?,?,?)", idPenjualan, stokGilingId, (int) jenis, jumlahKg, harga, total);
-                Database.insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", idPenjualan, DateUtil.today(), metode, jumlahBayar, sisa, status, "Pembayaran saat transaksi");
+                Database.insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", idPenjualan, DateUtil.today(), metode, jumlahBayarFinal, sisa, status, "Pembayaran lunas saat transaksi");
                 double stokSesudah = stok - jumlahKg;
                 Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", stokSesudah, stokSesudah <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
                 Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), (int) jenis, "PENJUALAN", "GILING", nomor, -jumlahKg, stok, stokSesudah, "Penjualan ikan giling");
@@ -42,30 +100,7 @@ public class SalesService {
     }
 
     public void bayarTransaksi(int penjualanId, double bayar, String metode) {
-        if (bayar <= 0) throw new IllegalArgumentException("Pembayaran harus lebih dari 0");
-        try (Connection c = Database.connect()) {
-            c.setAutoCommit(false);
-            double total = Database.scalarDouble(c, "SELECT total FROM penjualan WHERE id=?", penjualanId);
-            if (total <= 0) throw new IllegalArgumentException("ID penjualan tidak ditemukan");
-            double sudahBayar = Database.scalarDouble(c, "SELECT IFNULL(SUM(jumlah_bayar),0) FROM pembayaran WHERE penjualan_id=?", penjualanId);
-            double sisaSebelum = total - sudahBayar;
-            if (sisaSebelum <= 0) throw new IllegalArgumentException("Transaksi sudah lunas");
-            if (bayar > sisaSebelum) throw new IllegalArgumentException("Pembayaran melebihi sisa tagihan: " + sisaSebelum);
-            double sisa = Math.max(total - sudahBayar - bayar, 0);
-            String status = sisa <= 0 ? "LUNAS" : "BELUM_LUNAS";
-            try {
-                Database.insertAndGetId(c, "INSERT INTO pembayaran(penjualan_id,tanggal,metode,jumlah_bayar,sisa_bayar,status,catatan) VALUES(?,?,?,?,?,?,?)", penjualanId, DateUtil.today(), metode, bayar, sisa, status, "Pembayaran lanjutan");
-                Database.execute(c, "UPDATE penjualan SET status_pembayaran=? WHERE id=?", status, penjualanId);
-                c.commit();
-            } catch (Exception e) {
-                c.rollback();
-                throw e;
-            }
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Gagal menyimpan pembayaran: " + e.getMessage(), e);
-        }
+        throw new IllegalArgumentException("Sistem tidak menerima utang. Transaksi penjualan wajib lunas saat dibuat.");
     }
 
     public String transaksiText() {
@@ -76,9 +111,8 @@ public class SalesService {
     }
 
     public String pembayaranText() {
-        StringBuilder sb = new StringBuilder("TRANSAKSI BELUM LUNAS\n\n");
-        var rows = Database.query("SELECT id,nomor_transaksi,tanggal,total,status_pembayaran FROM penjualan WHERE status_pembayaran='BELUM_LUNAS' ORDER BY id DESC");
-        for (var r : rows) sb.append(String.format("ID %s | %s | %s | Total Rp %s | %s\n", r.get("id"), r.get("nomor_transaksi"), r.get("tanggal"), r.get("total"), r.get("status_pembayaran")));
-        return sb.toString();
+        return "Semua transaksi penjualan wajib lunas saat dibuat.\nTidak ada menu piutang atau pembayaran lanjutan.";
     }
+
+    private record AlokasiFifo(int stokGilingId, String batchNo, double jumlahKg, double hargaPerKg, double stokSebelum, double stokSesudah) {}
 }

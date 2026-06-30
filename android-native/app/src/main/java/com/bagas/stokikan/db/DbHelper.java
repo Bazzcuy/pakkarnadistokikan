@@ -11,12 +11,23 @@ import com.bagas.stokikan.model.User;
 import com.bagas.stokikan.util.DateUtil;
 import com.bagas.stokikan.util.PasswordUtil;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "stok_ikan_giling_android.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
+    private static final String[] TRANSFER_TABLES = {
+            "users", "jenis_ikan", "suppliers", "pelanggan", "stok_mentah", "stok_giling",
+            "stok_masuk", "produksi_giling", "penjualan", "detail_penjualan", "pembayaran", "riwayat_stok"
+    };
 
     public DbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -41,6 +52,14 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 5) {
+            addColumn(db, "riwayat_stok", "jenis_ikan_id", "INTEGER");
+            db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");
+            db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT d.jenis_ikan_id FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id WHERE p.nomor_transaksi=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'TRX-%'");
+            db.execSQL("UPDATE penjualan SET status_pembayaran='LUNAS' WHERE status_pembayaran='BELUM_LUNAS'");
+            db.execSQL("UPDATE pembayaran SET sisa_bayar=0,status='LUNAS',catatan='Pembayaran lunas' WHERE status='BELUM_LUNAS'");
+            return;
+        }
         if (oldVersion >= 3 && newVersion >= 4) {
             addColumn(db, "riwayat_stok", "jenis_ikan_id", "INTEGER");
             db.execSQL("UPDATE riwayat_stok SET jenis_ikan_id=(SELECT jenis_ikan_id FROM stok_giling WHERE batch_no=riwayat_stok.referensi LIMIT 1) WHERE jenis_ikan_id IS NULL AND referensi LIKE 'BG-%'");
@@ -191,11 +210,11 @@ public class DbHelper extends SQLiteOpenHelper {
         seedSale(db, "TRX-202606-002", "2026-06-24", 2, 2, 3, 4.5, 200000.0, "Transfer");
         seedSale(db, "TRX-202606-003", "2026-06-25", 4, 2, 4, 6.0, 336000.0, "Tunai");
         seedSale(db, "TRX-202606-004", "2026-06-25", 6, 2, 6, 7.0, 686000.0, "Transfer");
-        seedSale(db, "TRX-202606-005", "2026-06-26", 8, 2, 5, 1.5, 0.0, "Tempo");
+        seedSale(db, "TRX-202606-005", "2026-06-26", 8, 2, 5, 1.5, 63000.0, "Tunai");
         seedSale(db, "TRX-202606-006", "2026-06-26", 9, 2, 2, 3.0, 240000.0, "Tunai");
         seedSale(db, "TRX-202606-007", "2026-06-26", 10, 2, 7, 4.0, 208000.0, "Transfer");
         seedSale(db, "TRX-202606-008", "2026-06-27", 11, 2, 8, 5.0, 300000.0, "Tunai");
-        seedSale(db, "TRX-202606-009", "2026-06-27", 12, 2, 9, 2.5, 50000.0, "Tempo");
+        seedSale(db, "TRX-202606-009", "2026-06-27", 12, 2, 9, 2.5, 105000.0, "Transfer");
         seedSale(db, "TRX-202606-010", "2026-06-27", 3, 2, 10, 2.0, 148000.0, "Transfer");
         seedSale(db, "TRX-202606-011", "2026-06-28", 5, 2, 1, 4.0, 380000.0, "Tunai");
         seedSale(db, "TRX-202606-012", "2026-06-28", 7, 2, 6, 3.0, 200000.0, "Transfer");
@@ -243,8 +262,9 @@ public class DbHelper extends SQLiteOpenHelper {
         double harga = scalar(db, "SELECT harga_jual_per_kg FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
         int jenisId = (int) scalar(db, "SELECT jenis_ikan_id FROM stok_giling WHERE id=?", String.valueOf(stokGilingId));
         double total = kg * harga;
-        double sisa = total - bayar;
-        String status = sisa <= 0 ? "LUNAS" : "BELUM_LUNAS";
+        double bayarFinal = total;
+        double sisa = 0;
+        String status = "LUNAS";
         ContentValues pj = new ContentValues();
         pj.put("nomor_transaksi", nomor);
         pj.put("tanggal", tanggal);
@@ -269,7 +289,7 @@ public class DbHelper extends SQLiteOpenHelper {
         pay.put("penjualan_id", penjualanId);
         pay.put("tanggal", tanggal);
         pay.put("metode", metode);
-        pay.put("jumlah_bayar", bayar);
+        pay.put("jumlah_bayar", bayarFinal);
         pay.put("sisa_bayar", sisa);
         pay.put("status", status);
         pay.put("catatan", "Pembayaran transaksi penjualan");
@@ -430,7 +450,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 "Total stok mentah  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_mentah") + " kg\n" +
                 "Total stok giling  : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling") + " kg\n" +
                 "Total penjualan    : Rp " + scalar("SELECT IFNULL(SUM(total),0) FROM penjualan") + "\n" +
-                "Sisa belum lunas   : Rp " + scalar("SELECT IFNULL(SUM(p.total - IFNULL(b.bayar,0)),0) FROM penjualan p LEFT JOIN (SELECT penjualan_id, SUM(jumlah_bayar) AS bayar FROM pembayaran GROUP BY penjualan_id) b ON b.penjualan_id=p.id WHERE p.status_pembayaran='BELUM_LUNAS'") + "\n";
+                "Stok giling lama   : " + scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')") + " kg\n";
     }
 
     public String stokMentahText() {
@@ -454,6 +474,80 @@ public class DbHelper extends SQLiteOpenHelper {
     public double scalar(String sql, String... args) {
         try (Cursor c = getReadableDatabase().rawQuery(sql, args)) {
             return c.moveToFirst() ? c.getDouble(0) : 0.0;
+        }
+    }
+
+    public void exportJson(OutputStream outputStream) {
+        try {
+            JSONObject root = new JSONObject();
+            root.put("nama_aplikasi", "CATOKAN");
+            root.put("versi_data", 1);
+            JSONObject tables = new JSONObject();
+            SQLiteDatabase db = getReadableDatabase();
+            for (String table : TRANSFER_TABLES) {
+                JSONArray rows = new JSONArray();
+                try (Cursor c = db.rawQuery("SELECT * FROM " + table, null)) {
+                    while (c.moveToNext()) {
+                        JSONObject row = new JSONObject();
+                        for (int i = 0; i < c.getColumnCount(); i++) {
+                            if (c.isNull(i)) row.put(c.getColumnName(i), JSONObject.NULL);
+                            else if (c.getType(i) == Cursor.FIELD_TYPE_INTEGER) row.put(c.getColumnName(i), c.getLong(i));
+                            else if (c.getType(i) == Cursor.FIELD_TYPE_FLOAT) row.put(c.getColumnName(i), c.getDouble(i));
+                            else row.put(c.getColumnName(i), c.getString(i));
+                        }
+                        rows.put(row);
+                    }
+                }
+                tables.put(table, rows);
+            }
+            root.put("tables", tables);
+            outputStream.write(root.toString(2).getBytes(StandardCharsets.UTF_8));
+            outputStream.flush();
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal export data: " + e.getMessage(), e);
+        }
+    }
+
+    public int importJson(InputStream inputStream) {
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int read;
+            while ((read = inputStream.read(chunk)) != -1) buffer.write(chunk, 0, read);
+            JSONObject root = new JSONObject(buffer.toString(StandardCharsets.UTF_8.name()));
+            JSONObject tables = root.getJSONObject("tables");
+            SQLiteDatabase db = getWritableDatabase();
+            db.beginTransaction();
+            int imported = 0;
+            try {
+                for (int i = TRANSFER_TABLES.length - 1; i >= 0; i--) db.delete(TRANSFER_TABLES[i], null, null);
+                for (String table : TRANSFER_TABLES) {
+                    JSONArray rows = tables.optJSONArray(table);
+                    if (rows == null) continue;
+                    for (int i = 0; i < rows.length(); i++) {
+                        JSONObject row = rows.getJSONObject(i);
+                        ContentValues values = new ContentValues();
+                        JSONArray names = row.names();
+                        if (names == null) continue;
+                        for (int j = 0; j < names.length(); j++) {
+                            String name = names.getString(j);
+                            Object value = row.get(name);
+                            if (value == JSONObject.NULL) values.putNull(name);
+                            else if (value instanceof Integer || value instanceof Long) values.put(name, ((Number) value).longValue());
+                            else if (value instanceof Number) values.put(name, ((Number) value).doubleValue());
+                            else values.put(name, String.valueOf(value));
+                        }
+                        db.insert(table, null, values);
+                        imported++;
+                    }
+                }
+                db.setTransactionSuccessful();
+                return imported;
+            } finally {
+                db.endTransaction();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal import data: " + e.getMessage(), e);
         }
     }
 
