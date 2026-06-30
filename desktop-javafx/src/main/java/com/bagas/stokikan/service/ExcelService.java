@@ -31,7 +31,7 @@ public class ExcelService {
                     new String[]{"Total Stok Mentah (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_mentah")},
                     new String[]{"Total Stok Giling (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling")},
                     new String[]{"Total Penjualan Lunas", scalar("SELECT IFNULL(SUM(total),0) AS v FROM penjualan")},
-                    new String[]{"Stok Giling Lama FIFO (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')")}
+                    new String[]{"Stok Perlu Dijual Dulu (kg)", scalar("SELECT IFNULL(SUM(total_kg),0) AS v FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')")}
             ), header);
             writeTable(wb, "Stok Mentah", header, Database.query("SELECT j.nama AS jenis_ikan, s.total_kg, s.updated_at FROM stok_mentah s JOIN jenis_ikan j ON j.id=s.jenis_ikan_id ORDER BY j.nama"));
             writeTable(wb, "Stok Giling", header, Database.query("SELECT g.batch_no, j.nama AS jenis_ikan, g.total_kg, g.harga_jual_per_kg, g.tanggal_produksi, g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC"));

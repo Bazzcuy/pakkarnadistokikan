@@ -205,7 +205,7 @@ public class DbHelper extends SQLiteOpenHelper {
         seedProduction(db, "BG-202606-003", "2026-06-21", 3, 18.0, 15.0, 75000.0, 72000.0, "Produksi kakap");
         seedProduction(db, "BG-202606-004", "2026-06-22", 4, 22.0, 18.0, 70000.0, 56000.0, "Produksi patin");
         seedProduction(db, "BG-202606-005", "2026-06-23", 6, 10.0, 8.0, 90000.0, 110000.0, "Produksi belida");
-        seedProduction(db, "BG-202606-006", "2026-06-24", 1, 26.0, 22.0, 120000.0, 98000.0, "Produksi tenggiri batch besar");
+        seedProduction(db, "BG-202606-006", "2026-06-24", 1, 26.0, 22.0, 120000.0, 98000.0, "Produksi tenggiri jumlah besar");
         seedProduction(db, "BG-202606-007", "2026-06-25", 7, 17.0, 14.0, 60000.0, 52000.0, "Produksi nila ekonomis");
         seedProduction(db, "BG-202606-008", "2026-06-25", 8, 20.0, 16.0, 65000.0, 60000.0, "Produksi tongkol");
         seedProduction(db, "BG-202606-009", "2026-06-26", 5, 16.0, 13.0, 50000.0, 42000.0, "Produksi lele");
@@ -440,9 +440,18 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public List<OptionItem> options(String table) {
-        String label = table.equals("stok_giling") ? "batch_no || ' - ' || total_kg || ' kg'" : "nama";
+        String label = table.equals("stok_giling") ? "(SELECT nama FROM jenis_ikan WHERE id=stok_giling.jenis_ikan_id) || ' - produksi ' || tanggal_produksi || ' - ' || total_kg || ' kg'" : "nama";
         String sql = "SELECT id, " + label + " AS label FROM " + table + (table.equals("stok_giling") ? " WHERE total_kg>0" : "") + " ORDER BY id";
         List<OptionItem> list = new ArrayList<>();
+        try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
+            while (c.moveToNext()) list.add(new OptionItem(c.getInt(0), c.getString(1)));
+        }
+        return list;
+    }
+
+    public List<OptionItem> transaksiBerhasil() {
+        List<OptionItem> list = new ArrayList<>();
+        String sql = "SELECT p.id, p.nomor_transaksi || ' - ' || IFNULL(pl.nama,'Pelanggan') || ' - Rp ' || p.total AS label FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE p.status_pembayaran='LUNAS' ORDER BY p.id DESC";
         try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
             while (c.moveToNext()) list.add(new OptionItem(c.getInt(0), c.getString(1)));
         }

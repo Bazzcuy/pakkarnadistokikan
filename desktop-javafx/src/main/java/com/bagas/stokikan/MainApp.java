@@ -150,7 +150,7 @@ public class MainApp extends Application {
                 stat("Stok Lama", scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')") + " kg"));
         VBox chart = stockChart();
         GridPane grid = fishCards(Database.query("SELECT j.nama,j.kategori,j.gambar_path,IFNULL(sm.total_kg,0) AS mentah,IFNULL(SUM(sg.total_kg),0) AS giling FROM jenis_ikan j LEFT JOIN stok_mentah sm ON sm.jenis_ikan_id=j.id LEFT JOIN stok_giling sg ON sg.jenis_ikan_id=j.id GROUP BY j.id ORDER BY j.nama"));
-        return page("Dashboard Stok", sub("Ringkasan stok, umur batch, grafik stok giling, dan produk per jenis ikan."), stats, chart, scroll(grid));
+        return page("Dashboard Stok", sub("Ringkasan stok, stok yang perlu dijual lebih dulu, grafik stok giling, dan produk per jenis ikan."), stats, chart, scroll(grid));
     }
 
     private VBox profileView() {
@@ -316,23 +316,23 @@ public class MainApp extends Application {
         Button proses = primary("Proses Produksi");
         proses.setOnAction(e -> {
             try {
-                String batch = productionService.prosesProduksi(jenis.getValue().getId(), toDouble(mentah), toDouble(hasil), toDoubleOrZero(biaya), toDouble(harga), catatan.getText());
-                alert("Berhasil", "Batch produksi: " + batch);
+                productionService.prosesProduksi(jenis.getValue().getId(), toDouble(mentah), toDouble(hasil), toDoubleOrZero(biaya), toDouble(harga), catatan.getText());
+                alert("Berhasil", "Produksi ikan giling berhasil disimpan.");
                 setCenter(milledStockView());
             } catch (Exception ex) {
                 alert("Gagal", ex.getMessage());
             }
         });
-        TableView<Map<String, Object>> table = table(Database.query("SELECT p.batch_no,p.tanggal,j.nama AS jenis_ikan,p.berat_mentah_kg,p.berat_hasil_kg,p.penyusutan_kg,p.harga_jual_per_kg,p.catatan FROM produksi_giling p JOIN jenis_ikan j ON j.id=p.jenis_ikan_id ORDER BY p.id DESC"));
+        TableView<Map<String, Object>> table = table(Database.query("SELECT p.tanggal,j.nama AS jenis_ikan,p.berat_mentah_kg,p.berat_hasil_kg,p.penyusutan_kg,p.harga_jual_per_kg,p.catatan FROM produksi_giling p JOIN jenis_ikan j ON j.id=p.jenis_ikan_id ORDER BY p.id DESC"));
         HBox wrap = new HBox(12, form(title("Input Produksi Giling"), jenis, mentah, hasil, biaya, harga, catatan, proses), table);
         HBox.setHgrow(table, Priority.ALWAYS);
-        return page("Produksi Ikan Giling", sub("Produksi mengurangi stok mentah dan menambah batch stok giling."), wrap);
+        return page("Produksi Ikan Giling", sub("Produksi mengurangi stok mentah dan menambah stok ikan giling siap jual."), wrap);
     }
 
     private VBox milledStockView() {
-        TableView<Map<String, Object>> table = table(Database.query("SELECT g.batch_no,j.nama AS jenis_ikan,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY g.id DESC"));
+        TableView<Map<String, Object>> table = table(Database.query("SELECT j.nama AS jenis_ikan,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id ORDER BY date(g.tanggal_produksi),g.id"));
         GridPane cards = fishCards(Database.query("SELECT j.nama,j.kategori,j.gambar_path,0 AS mentah,IFNULL(SUM(g.total_kg),0) AS giling FROM jenis_ikan j LEFT JOIN stok_giling g ON g.jenis_ikan_id=j.id GROUP BY j.id ORDER BY j.nama"));
-        return page("Stok Ikan Giling", sub("Stok giling per batch dan total produk per jenis ikan."), scroll(cards), table);
+        return page("Stok Ikan Giling", sub("Stok giling per jenis ikan, tanggal produksi, harga jual, dan jumlah tersedia."), scroll(cards), table);
     }
 
     private VBox salesView() {
@@ -342,7 +342,7 @@ public class MainApp extends Application {
         TextField metode = field("Metode bayar");
         metode.setText("Tunai");
         TextField bayar = field("Jumlah bayar lunas");
-        Button simpan = primary("Simpan Penjualan FIFO");
+        Button simpan = primary("Simpan Penjualan");
         simpan.setOnAction(e -> {
             try {
                 String result = salesService.jualFifo(currentUser, pelanggan.getValue().getId(), jenis.getValue().getId(), toDouble(kg), metode.getText(), toDoubleOrZero(bayar));
@@ -353,9 +353,9 @@ public class MainApp extends Application {
             }
         });
         TableView<Map<String, Object>> table = table(Database.query("SELECT p.nomor_transaksi,p.tanggal,pl.nama AS pelanggan,j.nama AS jenis_ikan,SUM(d.jumlah_kg) AS kg,p.total,p.status_pembayaran FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id JOIN detail_penjualan d ON d.penjualan_id=p.id JOIN jenis_ikan j ON j.id=d.jenis_ikan_id GROUP BY p.id,j.id ORDER BY p.id DESC"));
-        HBox wrap = new HBox(12, form(title("Input Penjualan"), sub("Pilih jenis ikan. Sistem otomatis menghabiskan batch produksi paling lama lebih dulu (FIFO). Jika jumlah bayar dikosongkan, transaksi dianggap lunas sesuai total."), pelanggan, jenis, kg, metode, bayar, simpan), table);
+        HBox wrap = new HBox(12, form(title("Input Penjualan"), sub("Pilih jenis ikan. Sistem otomatis mengambil stok produksi yang lebih lama terlebih dahulu. Jika jumlah bayar dikosongkan, transaksi dianggap lunas sesuai total."), pelanggan, jenis, kg, metode, bayar, simpan), table);
         HBox.setHgrow(table, Priority.ALWAYS);
-        return page("Penjualan", sub("Transaksi keluar otomatis mengurangi stok giling dengan FIFO dan wajib lunas."), wrap);
+        return page("Penjualan", sub("Transaksi keluar otomatis mengurangi stok giling dan wajib lunas."), wrap);
     }
 
     private VBox historyView() {
@@ -375,12 +375,13 @@ public class MainApp extends Application {
     }
 
     private VBox controlView() {
-        TextField nomor = field("Nomor transaksi");
-        TextField alasanBatal = field("Alasan retur/batal");
-        Button batal = primary("Batalkan / Retur Transaksi");
+        ComboBox<OptionItem> transaksi = combo(masterService.transaksiBerhasil());
+        TextField alasanBatal = field("Alasan pembatalan");
+        Button batal = primary("Batalkan Penjualan");
         batal.setOnAction(e -> {
             try {
-                alert("Berhasil", salesService.batalkanPenjualan(nomor.getText(), alasanBatal.getText()));
+                if (transaksi.getValue() == null) throw new IllegalArgumentException("Belum ada transaksi berhasil yang bisa dibatalkan.");
+                alert("Berhasil", salesService.batalkanPenjualan(transaksi.getValue().getId(), alasanBatal.getText()));
                 setCenter(controlView());
             } catch (Exception ex) {
                 alert("Gagal", ex.getMessage());
@@ -388,11 +389,12 @@ public class MainApp extends Application {
         });
 
         ComboBox<OptionItem> jenisMentah = combo(masterService.jenisIkan());
-        TextField fisikMentah = field("Stok fisik mentah kg");
-        TextField alasanMentah = field("Alasan opname mentah");
-        Button opnameMentah = secondary("Simpan Opname Mentah");
-        opnameMentah.setOnAction(e -> {
+        TextField fisikMentah = field("Jumlah hasil hitung kg");
+        TextField alasanMentah = field("Alasan perubahan stok mentah");
+        Button cekMentah = secondary("Simpan Cek Ulang Stok Mentah");
+        cekMentah.setOnAction(e -> {
             try {
+                if (jenisMentah.getValue() == null) throw new IllegalArgumentException("Pilih jenis ikan dulu.");
                 alert("Berhasil", stockService.sesuaikanStokMentah(jenisMentah.getValue().getId(), toDouble(fisikMentah), alasanMentah.getText()));
                 setCenter(controlView());
             } catch (Exception ex) {
@@ -400,13 +402,14 @@ public class MainApp extends Application {
             }
         });
 
-        ComboBox<OptionItem> batchGiling = combo(masterService.batchGiling());
-        TextField fisikGiling = field("Stok fisik giling kg");
-        TextField alasanGiling = field("Alasan opname giling");
-        Button opnameGiling = secondary("Simpan Opname Giling");
-        opnameGiling.setOnAction(e -> {
+        ComboBox<OptionItem> stokGiling = combo(masterService.stokGilingUntukKoreksi());
+        TextField fisikGiling = field("Jumlah hasil hitung kg");
+        TextField alasanGiling = field("Alasan perubahan stok giling");
+        Button cekGiling = secondary("Simpan Cek Ulang Stok Giling");
+        cekGiling.setOnAction(e -> {
             try {
-                alert("Berhasil", stockService.sesuaikanStokGiling(batchGiling.getValue().getId(), toDouble(fisikGiling), alasanGiling.getText()));
+                if (stokGiling.getValue() == null) throw new IllegalArgumentException("Pilih stok giling dulu.");
+                alert("Berhasil", stockService.sesuaikanStokGiling(stokGiling.getValue().getId(), toDouble(fisikGiling), alasanGiling.getText()));
                 setCenter(controlView());
             } catch (Exception ex) {
                 alert("Gagal", ex.getMessage());
@@ -414,18 +417,18 @@ public class MainApp extends Application {
         });
 
         HBox forms = new HBox(12,
-                form(title("Retur / Batal"), sub("Membatalkan transaksi akan mengembalikan stok giling sesuai detail penjualan."), nomor, alasanBatal, batal),
-                form(title("Opname Stok Mentah"), sub("Masukkan jumlah fisik hasil hitung ulang. Sistem mencatat selisih ke riwayat."), jenisMentah, fisikMentah, alasanMentah, opnameMentah),
-                form(title("Opname Stok Giling"), sub("Pilih batch giling yang dihitung ulang agar koreksi tetap jelas."), batchGiling, fisikGiling, alasanGiling, opnameGiling));
-        TableView<Map<String, Object>> table = table(Database.query("SELECT tanggal,jenis_stok,stok_sistem,stok_fisik,selisih,alasan FROM penyesuaian_stok ORDER BY id DESC"));
-        return page("Kontrol Stok", sub("Menu audit untuk retur/batal transaksi dan penyesuaian stok hasil opname."), forms, table);
+                form(title("Batalkan Penjualan"), sub("Pilih transaksi yang sudah berhasil. Saat dibatalkan, stok akan dikembalikan otomatis."), transaksi, alasanBatal, batal),
+                form(title("Cek Ulang Stok Mentah"), sub("Masukkan jumlah stok hasil hitung di tempat. Selisihnya akan masuk riwayat."), jenisMentah, fisikMentah, alasanMentah, cekMentah),
+                form(title("Cek Ulang Stok Giling"), sub("Pilih stok giling yang dihitung ulang agar perubahan stok tetap jelas."), stokGiling, fisikGiling, alasanGiling, cekGiling));
+        TableView<Map<String, Object>> table = table(Database.query("SELECT tanggal,jenis_stok,stok_sistem,stok_fisik AS stok_hasil_hitung,selisih,alasan FROM penyesuaian_stok ORDER BY id DESC"));
+        return page("Kontrol Stok", sub("Menu untuk membatalkan penjualan dan memperbaiki jumlah stok setelah dihitung ulang."), forms, table);
     }
 
     private VBox reportView(Stage stage) {
         ComboBox<String> periode = new ComboBox<>(FXCollections.observableArrayList("Semua", "Hari Ini", "Minggu Ini", "Bulan Ini"));
         periode.getSelectionModel().selectFirst();
         ComboBox<OptionItem> jenis = combo(masterService.jenisIkan());
-        Button export = primary("Export Laporan");
+        Button export = primary("Simpan Laporan Excel");
         export.setOnAction(e -> {
             File file = saveExcel(stage, "laporan-catokan.xlsx");
             if (file == null) return;
@@ -436,24 +439,24 @@ public class MainApp extends Application {
                 alert("Gagal", ex.getMessage());
             }
         });
-        Button backup = secondary("Export Data Aplikasi");
+        Button backup = secondary("Cadangkan Data Aplikasi");
         backup.setOnAction(e -> {
             File file = saveExcel(stage, "data-catokan.xlsx");
             if (file == null) return;
             try {
                 excelService.exportBackup(file.toPath());
-                alert("Berhasil", "Data aplikasi berhasil diexport:\n" + file.getAbsolutePath());
+                alert("Berhasil", "Data aplikasi berhasil dicadangkan:\n" + file.getAbsolutePath());
             } catch (Exception ex) {
                 alert("Gagal", ex.getMessage());
             }
         });
-        Button restore = secondary("Import Data Aplikasi");
+        Button restore = secondary("Pulihkan Data Aplikasi");
         restore.setOnAction(e -> {
             File file = openExcel(stage);
             if (file == null) return;
             try {
                 int rows = excelService.importBackup(file.toPath());
-                alert("Berhasil", rows + " baris data aplikasi berhasil diimport.");
+                alert("Berhasil", rows + " baris data aplikasi berhasil dipulihkan.");
                 setCenter(dashboardView());
             } catch (Exception ex) {
                 alert("Gagal", ex.getMessage());
@@ -466,12 +469,12 @@ public class MainApp extends Application {
             excelService.exportStockImportTemplate(file.toPath());
             alert("Berhasil", "Template dibuat.");
         });
-        Button importExcel = secondary("Import Stok Masuk");
+        Button importExcel = secondary("Masukkan Stok dari Excel");
         importExcel.setOnAction(e -> {
             File file = openExcel(stage);
             if (file == null) return;
             int rows = excelService.importStockIn(file.toPath());
-            alert("Berhasil", rows + " baris stok masuk diimport.");
+            alert("Berhasil", rows + " baris stok masuk berhasil dimasukkan.");
             setCenter(reportView(stage));
         });
         VBox box = page("Laporan Ringkas", sub("Laporan bisa dilihat semua, harian, mingguan, bulanan, dan per jenis ikan."), new HBox(10, new Label("Periode"), periode, new Label("Jenis"), jenis, export, backup, restore, template, importExcel));
@@ -536,7 +539,7 @@ public class MainApp extends Application {
         VBox box = new VBox(8);
         box.getStyleClass().add("card");
         box.setPadding(new Insets(12));
-        box.getChildren().addAll(title("Grafik Stok Giling"), sub("Bar menunjukkan stok giling per jenis ikan. Batch berumur 5 hari atau lebih tetap diprioritaskan FIFO saat penjualan."));
+        box.getChildren().addAll(title("Grafik Stok Giling"), sub("Bar menunjukkan stok giling per jenis ikan. Stok yang lebih lama akan dijual lebih dulu oleh sistem."));
         List<Map<String, Object>> rows = Database.query("SELECT j.nama,IFNULL(SUM(g.total_kg),0) AS total FROM jenis_ikan j LEFT JOIN stok_giling g ON g.jenis_ikan_id=j.id GROUP BY j.id ORDER BY total DESC LIMIT 8");
         double max = rows.stream().mapToDouble(r -> Double.parseDouble(value(r, "total").isBlank() ? "0" : value(r, "total"))).max().orElse(1);
         for (Map<String, Object> row : rows) {

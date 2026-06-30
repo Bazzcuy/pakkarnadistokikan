@@ -48,8 +48,8 @@ public class ProductionActivity extends Activity {
     private void save() {
         try {
             OptionItem j = (OptionItem) jenis.getSelectedItem();
-            String batch = service.prosesProduksi(j.id, toDouble(mentah), toDouble(hasil), toDoubleZero(biaya), toDouble(hargaJual), catatan.getText().toString());
-            Toast.makeText(this, "Produksi berhasil. Batch: " + batch, Toast.LENGTH_LONG).show();
+            service.prosesProduksi(j.id, toDouble(mentah), toDouble(hasil), toDoubleZero(biaya), toDouble(hargaJual), catatan.getText().toString());
+            Toast.makeText(this, "Produksi ikan giling berhasil disimpan.", Toast.LENGTH_LONG).show();
             finish();
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();

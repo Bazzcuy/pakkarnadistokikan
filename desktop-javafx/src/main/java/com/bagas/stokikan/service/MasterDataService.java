@@ -24,6 +24,14 @@ public class MasterDataService {
         return options("SELECT id, batch_no || ' - ' || (SELECT nama FROM jenis_ikan WHERE id=stok_giling.jenis_ikan_id) || ' (' || total_kg || ' kg)' AS nama FROM stok_giling WHERE total_kg>0 ORDER BY id DESC");
     }
 
+    public List<OptionItem> stokGilingUntukKoreksi() {
+        return options("SELECT g.id, j.nama || ' - produksi ' || g.tanggal_produksi || ' (' || g.total_kg || ' kg)' AS nama FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id WHERE g.total_kg>=0 ORDER BY date(g.tanggal_produksi),g.id");
+    }
+
+    public List<OptionItem> transaksiBerhasil() {
+        return options("SELECT p.id, p.nomor_transaksi || ' - ' || IFNULL(pl.nama,'Pelanggan') || ' - Rp ' || p.total AS nama FROM penjualan p LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE p.status_pembayaran='LUNAS' ORDER BY p.id DESC");
+    }
+
     public void simpanSupplier(Integer id, String nama, String hp, String alamat, String catatan) {
         if (nama == null || nama.isBlank()) throw new IllegalArgumentException("Nama supplier wajib diisi");
         try (var c = Database.connect()) {

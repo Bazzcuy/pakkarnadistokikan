@@ -21,7 +21,7 @@ Untuk presentasi PBO, jalankan via Maven/IDE agar source code dan struktur OOP m
 - Dashboard
 - Input stok ikan mentah
 - Proses produksi ikan giling
-- Stok giling per batch dengan prioritas FIFO
+- Stok giling per tanggal produksi dengan prioritas stok lama dijual dulu
 - Transaksi penjualan wajib lunas
 - Laporan ringkas
 

@@ -1,12 +1,16 @@
 package com.bagas.stokikan;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -19,12 +23,12 @@ import com.bagas.stokikan.service.StockService;
 public class StockControlActivity extends Activity {
     private DbHelper db;
     private StockService service;
-    private EditText nomor;
+    private Spinner transaksi;
     private EditText alasanBatal;
     private Spinner jenisMentah;
     private EditText fisikMentah;
     private EditText alasanMentah;
-    private Spinner batchGiling;
+    private Spinner stokGiling;
     private EditText fisikGiling;
     private EditText alasanGiling;
 
@@ -43,31 +47,43 @@ public class StockControlActivity extends Activity {
         scroll.addView(root);
         root.addView(header());
 
-        nomor = input("Nomor transaksi");
-        alasanBatal = input("Alasan retur/batal");
-        Button batal = button("Batalkan / Retur Transaksi", true);
-        batal.setOnClickListener(v -> run(() -> service.batalkanPenjualan(nomor.getText().toString(), alasanBatal.getText().toString())));
-        root.addView(card("Retur / Batal Transaksi", "Stok giling dikembalikan sesuai detail penjualan.", nomor, alasanBatal, batal));
+        transaksi = spinner(db.transaksiBerhasil());
+        alasanBatal = input("Alasan pembatalan");
+        Button batal = button("Batalkan Penjualan", true);
+        batal.setOnClickListener(v -> {
+            OptionItem item = (OptionItem) transaksi.getSelectedItem();
+            run(() -> {
+                if (item == null) throw new IllegalArgumentException("Belum ada transaksi berhasil yang bisa dibatalkan");
+                return service.batalkanPenjualan(item.id, alasanBatal.getText().toString());
+            });
+        });
+        root.addView(card("Batalkan Penjualan", "Pilih transaksi yang sudah berhasil. Stok akan dikembalikan otomatis.", transaksi, alasanBatal, batal));
 
         jenisMentah = spinner(db.options("jenis_ikan"));
-        fisikMentah = input("Stok fisik mentah kg");
-        alasanMentah = input("Alasan opname mentah");
-        Button opnameMentah = button("Simpan Opname Mentah", false);
-        opnameMentah.setOnClickListener(v -> {
+        fisikMentah = input("Jumlah hasil hitung kg");
+        alasanMentah = input("Alasan perubahan stok mentah");
+        Button cekMentah = button("Simpan Cek Ulang Stok Mentah", false);
+        cekMentah.setOnClickListener(v -> {
             OptionItem item = (OptionItem) jenisMentah.getSelectedItem();
-            run(() -> service.sesuaikanStokMentah(item.id, toDouble(fisikMentah), alasanMentah.getText().toString()));
+            run(() -> {
+                if (item == null) throw new IllegalArgumentException("Pilih jenis ikan dulu");
+                return service.sesuaikanStokMentah(item.id, toDouble(fisikMentah), alasanMentah.getText().toString());
+            });
         });
-        root.addView(card("Opname Stok Mentah", "Masukkan hasil hitung fisik agar selisih tercatat di riwayat.", jenisMentah, fisikMentah, alasanMentah, opnameMentah));
+        root.addView(card("Cek Ulang Stok Mentah", "Masukkan jumlah stok hasil hitung di tempat. Selisihnya akan masuk riwayat.", jenisMentah, fisikMentah, alasanMentah, cekMentah));
 
-        batchGiling = spinner(db.options("stok_giling"));
-        fisikGiling = input("Stok fisik giling kg");
-        alasanGiling = input("Alasan opname giling");
-        Button opnameGiling = button("Simpan Opname Giling", false);
-        opnameGiling.setOnClickListener(v -> {
-            OptionItem item = (OptionItem) batchGiling.getSelectedItem();
-            run(() -> service.sesuaikanStokGiling(item.id, toDouble(fisikGiling), alasanGiling.getText().toString()));
+        stokGiling = spinner(db.options("stok_giling"));
+        fisikGiling = input("Jumlah hasil hitung kg");
+        alasanGiling = input("Alasan perubahan stok giling");
+        Button cekGiling = button("Simpan Cek Ulang Stok Giling", false);
+        cekGiling.setOnClickListener(v -> {
+            OptionItem item = (OptionItem) stokGiling.getSelectedItem();
+            run(() -> {
+                if (item == null) throw new IllegalArgumentException("Pilih stok giling dulu");
+                return service.sesuaikanStokGiling(item.id, toDouble(fisikGiling), alasanGiling.getText().toString());
+            });
         });
-        root.addView(card("Opname Stok Giling", "Pilih batch agar koreksi stok tetap bisa diaudit.", batchGiling, fisikGiling, alasanGiling, opnameGiling));
+        root.addView(card("Cek Ulang Stok Giling", "Pilih stok giling yang dihitung ulang agar perubahan stok tetap jelas.", stokGiling, fisikGiling, alasanGiling, cekGiling));
 
         Button back = button("Kembali", false);
         back.setOnClickListener(v -> finish());
@@ -79,7 +95,7 @@ public class StockControlActivity extends Activity {
         LinearLayout box = column(18);
         box.setBackgroundResource(R.drawable.bg_gradient_card);
         box.addView(text("Kontrol Stok", 23, 0xffffffff, true));
-        box.addView(text("Retur, batal transaksi, dan opname stok untuk menjaga data tetap sesuai kondisi fisik.", 14, 0xffdff7ff, false));
+        box.addView(text("Batalkan penjualan dan perbaiki jumlah stok setelah dihitung ulang.", 14, 0xffdff7ff, false));
         return box;
     }
 
@@ -97,9 +113,42 @@ public class StockControlActivity extends Activity {
 
     private Spinner spinner(java.util.List<OptionItem> items) {
         Spinner spinner = new Spinner(this);
-        spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items));
+        ArrayAdapter<OptionItem> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
         spinner.setPadding(0, dp(8), 0, dp(8));
+        spinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) showSearchDialog(spinner, adapter, items);
+            return true;
+        });
         return spinner;
+    }
+
+    private void showSearchDialog(Spinner spinner, ArrayAdapter<OptionItem> mainAdapter, java.util.List<OptionItem> items) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        SearchView search = new SearchView(this);
+        search.setQueryHint("Cari data...");
+        ListView list = new ListView(this);
+        ArrayAdapter<OptionItem> dialogAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, items);
+        list.setAdapter(dialogAdapter);
+        box.addView(search);
+        box.addView(list);
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Pilih Data").setView(box).create();
+        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String text) {
+                dialogAdapter.getFilter().filter(text);
+                return true;
+            }
+        });
+        list.setOnItemClickListener((parent, view, position, id) -> {
+            OptionItem selected = dialogAdapter.getItem(position);
+            int index = mainAdapter.getPosition(selected);
+            if (index >= 0) spinner.setSelection(index);
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 
     private EditText input(String hint) {
@@ -154,7 +203,7 @@ public class StockControlActivity extends Activity {
 
     private double toDouble(EditText input) {
         String value = input.getText().toString().trim();
-        if (value.isEmpty()) throw new IllegalArgumentException("Input stok fisik wajib diisi");
+        if (value.isEmpty()) throw new IllegalArgumentException("Jumlah hasil hitung wajib diisi");
         return Double.parseDouble(value.replace(",", "."));
     }
 

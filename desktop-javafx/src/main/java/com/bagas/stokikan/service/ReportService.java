@@ -13,7 +13,7 @@ public class ReportService {
                 String.format("%-26s : %s kg\n", "Total stok mentah", totalMentah) +
                 String.format("%-26s : %s kg\n", "Total stok giling", totalGiling) +
                 String.format("%-26s : Rp %s\n", "Total penjualan lunas", totalJual) +
-                String.format("%-26s : %s kg\n\n", "Stok lama FIFO", stokLama) +
+                String.format("%-26s : %s kg\n\n", "Stok perlu dijual dulu", stokLama) +
                 "Akun awal pengguna: pengguna/pengguna123";
     }
 

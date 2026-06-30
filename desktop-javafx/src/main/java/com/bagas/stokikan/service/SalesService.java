@@ -48,10 +48,10 @@ public class SalesService {
                 for (AlokasiFifo a : alokasi) {
                     Database.insertAndGetId(c, "INSERT INTO detail_penjualan(penjualan_id,stok_giling_id,jenis_ikan_id,jumlah_kg,harga_per_kg,subtotal) VALUES(?,?,?,?,?,?)", idPenjualan, a.stokGilingId, jenisIkanId, a.jumlahKg, a.hargaPerKg, a.jumlahKg * a.hargaPerKg);
                     Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", a.stokSesudah, a.stokSesudah <= 0 ? "HABIS" : "TERSEDIA", a.stokGilingId);
-                    Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENJUALAN_FIFO", "GILING", nomor, -a.jumlahKg, a.stokSebelum, a.stokSesudah, "FIFO otomatis dari batch " + a.batchNo);
+                    Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENJUALAN", "GILING", nomor, -a.jumlahKg, a.stokSebelum, a.stokSesudah, "Penjualan mengambil stok produksi lama lebih dulu");
                 }
                 c.commit();
-                return nomor + " | FIFO " + alokasi.size() + " batch | Total: Rp " + total + " | LUNAS";
+                return nomor + " | Total: Rp " + total + " | LUNAS";
             } catch (Exception e) {
                 c.rollback();
                 throw e;
@@ -59,7 +59,7 @@ public class SalesService {
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Gagal menyimpan penjualan FIFO: " + e.getMessage(), e);
+            throw new RuntimeException("Gagal menyimpan penjualan: " + e.getMessage(), e);
         }
     }
 
@@ -147,6 +147,22 @@ public class SalesService {
         } catch (Exception e) {
             throw new RuntimeException("Gagal membatalkan transaksi: " + e.getMessage(), e);
         }
+    }
+
+    public String batalkanPenjualan(int penjualanId, String alasan) {
+        if (penjualanId <= 0) throw new IllegalArgumentException("Pilih transaksi yang akan dibatalkan");
+        String nomor = "";
+        try (Connection c = Database.connect();
+             PreparedStatement ps = c.prepareStatement("SELECT nomor_transaksi FROM penjualan WHERE id=?")) {
+            ps.setInt(1, penjualanId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) nomor = rs.getString(1);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal membaca transaksi: " + e.getMessage(), e);
+        }
+        if (nomor.isBlank()) throw new IllegalArgumentException("Transaksi tidak ditemukan");
+        return batalkanPenjualan(nomor, alasan);
     }
 
     public String transaksiText() {

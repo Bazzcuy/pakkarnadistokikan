@@ -34,8 +34,8 @@ public class StockService {
     }
 
     public String sesuaikanStokMentah(int jenisIkanId, double stokFisik, String alasan) {
-        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
-        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan penyesuaian wajib diisi");
+        if (stokFisik < 0) throw new IllegalArgumentException("Jumlah stok hasil hitung tidak boleh negatif");
+        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan perubahan stok wajib diisi");
         try (Connection c = Database.connect()) {
             c.setAutoCommit(false);
             try {
@@ -43,9 +43,9 @@ public class StockService {
                 double selisih = stokFisik - before;
                 Database.execute(c, "UPDATE stok_mentah SET total_kg=?, updated_at=? WHERE jenis_ikan_id=?", stokFisik, DateUtil.now(), jenisIkanId);
                 Database.insertAndGetId(c, "INSERT INTO penyesuaian_stok(tanggal,jenis_stok,stok_sistem,stok_fisik,selisih,alasan) VALUES(?,?,?,?,?,?)", DateUtil.now(), "MENTAH", before, stokFisik, selisih, alasan.trim());
-                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENYESUAIAN_STOK", "MENTAH", "opname", selisih, before, stokFisik, alasan.trim());
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PERBAIKAN_STOK", "MENTAH", "cek ulang stok", selisih, before, stokFisik, alasan.trim());
                 c.commit();
-                return "Stok mentah disesuaikan. Selisih: " + selisih + " kg";
+                return "Stok mentah diperbarui. Selisih: " + selisih + " kg";
             } catch (Exception e) {
                 c.rollback();
                 throw e;
@@ -58,8 +58,8 @@ public class StockService {
     }
 
     public String sesuaikanStokGiling(int stokGilingId, double stokFisik, String alasan) {
-        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
-        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan penyesuaian wajib diisi");
+        if (stokFisik < 0) throw new IllegalArgumentException("Jumlah stok hasil hitung tidak boleh negatif");
+        if (alasan == null || alasan.isBlank()) throw new IllegalArgumentException("Alasan perubahan stok wajib diisi");
         try (Connection c = Database.connect()) {
             c.setAutoCommit(false);
             try {
@@ -68,9 +68,9 @@ public class StockService {
                 double selisih = stokFisik - before;
                 Database.execute(c, "UPDATE stok_giling SET total_kg=?, status_stok=? WHERE id=?", stokFisik, stokFisik <= 0 ? "HABIS" : "TERSEDIA", stokGilingId);
                 Database.insertAndGetId(c, "INSERT INTO penyesuaian_stok(tanggal,jenis_stok,stok_sistem,stok_fisik,selisih,alasan) VALUES(?,?,?,?,?,?)", DateUtil.now(), "GILING", before, stokFisik, selisih, alasan.trim());
-                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PENYESUAIAN_STOK", "GILING", "opname", selisih, before, stokFisik, alasan.trim());
+                Database.execute(c, "INSERT INTO riwayat_stok(tanggal,jenis_ikan_id,jenis_transaksi,jenis_stok,referensi,perubahan_kg,stok_sebelum,stok_sesudah,keterangan) VALUES(?,?,?,?,?,?,?,?,?)", DateUtil.now(), jenisIkanId, "PERBAIKAN_STOK", "GILING", "cek ulang stok", selisih, before, stokFisik, alasan.trim());
                 c.commit();
-                return "Stok giling disesuaikan. Selisih: " + selisih + " kg";
+                return "Stok giling diperbarui. Selisih: " + selisih + " kg";
             } catch (Exception e) {
                 c.rollback();
                 throw e;

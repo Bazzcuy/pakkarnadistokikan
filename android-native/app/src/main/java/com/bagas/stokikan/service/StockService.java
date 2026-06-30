@@ -226,7 +226,7 @@ public class StockService {
                     upd.put("total_kg", after);
                     upd.put("status_stok", after <= 0 ? "HABIS" : "TERSEDIA");
                     db.update("stok_giling", upd, "id=?", new String[]{String.valueOf(stokGilingId)});
-                    riwayat(db, jenisIkanId, "PENJUALAN_FIFO", "GILING", nomor, -ambil, stokBatch, after, "FIFO otomatis dari batch " + batchNo);
+                    riwayat(db, jenisIkanId, "PENJUALAN", "GILING", nomor, -ambil, stokBatch, after, "Penjualan mengambil stok produksi lama lebih dulu");
                     sisaAmbil -= ambil;
                     jumlahBatch++;
                 }
@@ -234,7 +234,7 @@ public class StockService {
                 cursor.close();
             }
             db.setTransactionSuccessful();
-            return nomor + " | FIFO " + jumlahBatch + " batch | Total Rp " + total + " | LUNAS";
+            return nomor + " | Total Rp " + total + " | LUNAS";
         } finally {
             db.endTransaction();
         }
@@ -288,9 +288,20 @@ public class StockService {
         }
     }
 
+    public String batalkanPenjualan(int penjualanId, String alasan) {
+        if (penjualanId <= 0) throw new IllegalArgumentException("Pilih transaksi yang akan dibatalkan");
+        String nomor = "";
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        try (Cursor c = db.rawQuery("SELECT nomor_transaksi FROM penjualan WHERE id=?", new String[]{String.valueOf(penjualanId)})) {
+            if (c.moveToFirst()) nomor = c.getString(0);
+        }
+        if (nomor.isEmpty()) throw new IllegalArgumentException("Transaksi tidak ditemukan");
+        return batalkanPenjualan(nomor, alasan);
+    }
+
     public String sesuaikanStokMentah(int jenisIkanId, double stokFisik, String alasan) {
-        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
-        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan opname wajib diisi");
+        if (stokFisik < 0) throw new IllegalArgumentException("Jumlah stok hasil hitung tidak boleh negatif");
+        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan perubahan stok wajib diisi");
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
         try {
@@ -301,17 +312,17 @@ public class StockService {
             update.put("updated_at", DateUtil.now());
             db.update("stok_mentah", update, "jenis_ikan_id=?", new String[]{String.valueOf(jenisIkanId)});
             penyesuaian(db, "MENTAH", before, stokFisik, selisih, alasan.trim());
-            riwayat(db, jenisIkanId, "PENYESUAIAN_STOK", "MENTAH", "opname", selisih, before, stokFisik, alasan.trim());
+            riwayat(db, jenisIkanId, "PERBAIKAN_STOK", "MENTAH", "cek ulang stok", selisih, before, stokFisik, alasan.trim());
             db.setTransactionSuccessful();
-            return "Stok mentah disesuaikan. Selisih: " + selisih + " kg";
+            return "Stok mentah diperbarui. Selisih: " + selisih + " kg";
         } finally {
             db.endTransaction();
         }
     }
 
     public String sesuaikanStokGiling(int stokGilingId, double stokFisik, String alasan) {
-        if (stokFisik < 0) throw new IllegalArgumentException("Stok fisik tidak boleh negatif");
-        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan opname wajib diisi");
+        if (stokFisik < 0) throw new IllegalArgumentException("Jumlah stok hasil hitung tidak boleh negatif");
+        if (alasan == null || alasan.trim().isEmpty()) throw new IllegalArgumentException("Alasan perubahan stok wajib diisi");
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
         try {
@@ -323,9 +334,9 @@ public class StockService {
             update.put("status_stok", stokFisik <= 0 ? "HABIS" : "TERSEDIA");
             db.update("stok_giling", update, "id=?", new String[]{String.valueOf(stokGilingId)});
             penyesuaian(db, "GILING", before, stokFisik, selisih, alasan.trim());
-            riwayat(db, jenisIkanId, "PENYESUAIAN_STOK", "GILING", "opname", selisih, before, stokFisik, alasan.trim());
+            riwayat(db, jenisIkanId, "PERBAIKAN_STOK", "GILING", "cek ulang stok", selisih, before, stokFisik, alasan.trim());
             db.setTransactionSuccessful();
-            return "Stok giling disesuaikan. Selisih: " + selisih + " kg";
+            return "Stok giling diperbarui. Selisih: " + selisih + " kg";
         } finally {
             db.endTransaction();
         }

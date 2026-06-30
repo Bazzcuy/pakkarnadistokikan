@@ -103,15 +103,15 @@ public class TextActivity extends Activity {
     }
 
     private void renderGiling() {
-        summary("Total Stok Giling", kg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling")), "Batch tersedia", String.valueOf(countWhere("stok_giling", "total_kg>0")));
-        String sql = "SELECT g.batch_no,j.nama,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id WHERE 1=1 " + jenisSql("j.nama") + periodSql("g.tanggal_produksi") + " ORDER BY date(g.tanggal_produksi),g.id";
+        summary("Total Stok Giling", kg(db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling")), "Data tersedia", String.valueOf(countWhere("stok_giling", "total_kg>0")));
+        String sql = "SELECT j.nama,j.gambar_path,g.total_kg,g.harga_jual_per_kg,g.tanggal_produksi,g.status_stok FROM stok_giling g JOIN jenis_ikan j ON j.id=g.jenis_ikan_id WHERE 1=1 " + jenisSql("j.nama") + periodSql("g.tanggal_produksi") + " ORDER BY date(g.tanggal_produksi),g.id";
         try (Cursor c = db.rawQuery(sql)) {
             while (c.moveToNext()) {
-                LinearLayout row = imageCard(c.getString(2));
+                LinearLayout row = imageCard(c.getString(1));
                 LinearLayout body = (LinearLayout) row.getChildAt(1);
-                body.addView(text(c.getString(0) + " - " + c.getString(1), 18, 0xff103b52, true));
-                body.addView(text(kg(c.getDouble(3)) + " | Rp " + money(c.getDouble(4)) + "/kg", 14, 0xff076b9d, true));
-                body.addView(text("Produksi: " + c.getString(5) + " | " + c.getString(6) + " | Prioritas FIFO", 13, 0xff5f7d90, false));
+                body.addView(text(c.getString(0), 18, 0xff103b52, true));
+                body.addView(text(kg(c.getDouble(2)) + " | Rp " + money(c.getDouble(3)) + "/kg", 14, 0xff076b9d, true));
+                body.addView(text("Produksi: " + c.getString(4) + " | " + c.getString(5) + " | Dijual lebih dulu jika lebih lama", 13, 0xff5f7d90, false));
                 content.addView(row);
             }
         }
@@ -125,7 +125,7 @@ public class TextActivity extends Activity {
         double jual = db.scalar("SELECT IFNULL(SUM(p.total),0) FROM penjualan p WHERE 1=1 " + salesWhere);
         double stokLama = db.scalar("SELECT IFNULL(SUM(total_kg),0) FROM stok_giling WHERE total_kg>0 AND date(tanggal_produksi)<=date('now','-5 day')");
         summary("Stok Mentah", kg(mentah), "Stok Giling", kg(giling));
-        summary("Penjualan Lunas", "Rp " + money(jual), "Stok Lama FIFO", kg(stokLama));
+        summary("Penjualan Lunas", "Rp " + money(jual), "Stok Perlu Dijual Dulu", kg(stokLama));
         section("Transaksi Penjualan");
         String sales = "SELECT p.nomor_transaksi,p.tanggal,IFNULL(pl.nama,'Pelanggan Umum') pelanggan,j.nama jenis_ikan,d.jumlah_kg,p.total,p.status_pembayaran FROM penjualan p JOIN detail_penjualan d ON d.penjualan_id=p.id JOIN jenis_ikan j ON j.id=d.jenis_ikan_id LEFT JOIN pelanggan pl ON pl.id=p.pelanggan_id WHERE 1=1 " + salesWhere + " ORDER BY p.tanggal DESC,p.id DESC LIMIT 25";
         try (Cursor c = db.rawQuery(sales)) {
@@ -252,7 +252,7 @@ public class TextActivity extends Activity {
 
     private String subtitle() {
         if ("raw".equals(mode)) return "Stok mentah per jenis ikan lengkap dengan gambar, jumlah, dan riwayat.";
-        if ("giling".equals(mode)) return "Stok ikan giling per batch lengkap dengan gambar, harga, dan riwayat.";
+        if ("giling".equals(mode)) return "Stok ikan giling lengkap dengan gambar, harga, tanggal produksi, dan riwayat.";
         return "Laporan operasional dengan ringkasan, transaksi, dan riwayat stok.";
     }
 

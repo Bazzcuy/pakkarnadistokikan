@@ -29,7 +29,7 @@ Setelah dipush ke GitHub, buka tab `Actions`, jalankan `Build Android Debug APK`
 - `DashboardActivity`: statistik, menu utama, export/import data, dan shortcut bottom navigation sederhana.
 - `RawStockActivity`: input stok mentah.
 - `ProductionActivity`: produksi ikan giling.
-- `SalesActivity`: penjualan FIFO wajib lunas.
+- `SalesActivity`: penjualan wajib lunas dan stok lama otomatis dijual dulu.
 - `TextActivity`: tampilan stok/laporan detail.
 
 ## Catatan UI
