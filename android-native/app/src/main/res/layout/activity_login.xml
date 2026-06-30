@@ -13,9 +13,10 @@
 
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="230dp"
+            android:layout_height="210dp"
             android:src="@drawable/catokan_banner"
-            android:scaleType="centerCrop" />
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,6 +36,7 @@
                     android:layout_width="82dp"
                     android:layout_height="82dp"
                     android:src="@drawable/catokan_logo"
+                    android:adjustViewBounds="true"
                     android:scaleType="fitCenter" />
 
                 <LinearLayout

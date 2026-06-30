@@ -14,9 +14,10 @@
 
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="360dp"
+            android:layout_height="310dp"
             android:src="@drawable/catokan_hero"
-            android:scaleType="centerCrop" />
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
 
         <TextView
             android:layout_width="match_parent"

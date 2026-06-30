@@ -20,7 +20,6 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         db = new DbHelper(this);
-        db.getWritableDatabase();
         username = findViewById(R.id.edtUsername);
         password = findViewById(R.id.edtPassword);
         username.setText("pengguna");
@@ -37,7 +36,13 @@ public class LoginActivity extends Activity {
     }
 
     private void login(String u, String p) {
-        User user = db.login(u, p);
+        User user;
+        try {
+            user = db.login(u, p);
+        } catch (Exception e) {
+            Toast.makeText(this, "Data aplikasi belum siap: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return;
+        }
         if (user == null) {
             Toast.makeText(this, "Login gagal. Periksa username dan password.", Toast.LENGTH_LONG).show();
             return;
