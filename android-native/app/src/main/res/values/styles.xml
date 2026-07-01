@@ -8,6 +8,8 @@
     </style>
 
     <style name="CatokanTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@color/catokan_text</item>
         <item name="android:textSize">23sp</item>
         <item name="android:textStyle">bold</item>
@@ -15,12 +17,16 @@
     </style>
 
     <style name="CatokanSubtitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@color/catokan_muted</item>
         <item name="android:textSize">14sp</item>
         <item name="android:lineSpacingExtra">2dp</item>
     </style>
 
     <style name="CatokanLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@color/catokan_text</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
