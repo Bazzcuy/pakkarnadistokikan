@@ -1,0 +1,39 @@
+name: catokan
+description: "CATOKAN — Catat Stok Ikan Giling untuk Mama."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # Backend
+  supabase_flutter: ^2.5.6
+
+  # Local DB
+  sqflite: ^2.3.3
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Utility
+  intl: ^0.19.0
+  uuid: ^4.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

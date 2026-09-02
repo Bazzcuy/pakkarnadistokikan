@@ -1,0 +1,38 @@
+# ============================================================
+# Secrets (jangan di-commit ke repo)
+# ============================================================
+supabase/.env
+app/lib/secrets.dart
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+*.iml
+.idea/
+.vscode/
+
+# Build artifacts
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/.idea/
+app/.gradle/
+
+# Android build
+app/android/.gradle/
+app/android/local.properties
+app/android/app/release/
+app/android/captures/
+app/android/.cxx/
+app/android/key.properties
+
+# Backup
+_ARCHIVE_skripsi_2024/
+
+# Generated / cached
+**/*.g.dart
+**/*.freezed.dart
+.docusaurus/
+.mf2/
