@@ -8,7 +8,7 @@ on:
       - '.github/workflows/**'
   pull_request:
     branches: [main, master]
-  workflow_dispatch:  # bisa trigger manual dari GitHub UI
+  workflow_dispatch:
 
 jobs:
   build:
@@ -24,6 +24,11 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Setup Gradle (auto-generate wrapper if missing)
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -53,9 +58,18 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Run analyzer (skip on error supaya workflow gak strict di awal)
+      - name: Generate gradle wrapper
+        working-directory: app/android
+        run: |
+          gradle wrapper --gradle-version 8.5 --distribution-type bin || true
+
+      - name: Make gradlew executable
+        working-directory: app/android
+        run: chmod +x gradlew
+
+      - name: Run analyzer (non-blocking)
         working-directory: app
-        run: flutter analyze --no-fatal-infos || echo "::warning::analyzer found issues"
+        run: flutter analyze --no-fatal-infos || echo "::warning::analyzer found non-fatal issues"
 
       - name: Build debug APK
         working-directory: app
@@ -64,8 +78,8 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           flutter build apk --debug \
-            --dart-define=SUPABASE_URL=${SUPABASE_URL} \
-            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+            --dart-define=SUPABASE_URL=${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co} \
+            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}
 
       - name: Build release APK (unsigned)
         working-directory: app
@@ -74,8 +88,8 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           flutter build apk --release \
-            --dart-define=SUPABASE_URL=${SUPABASE_URL} \
-            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+            --dart-define=SUPABASE_URL=${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co} \
+            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -93,7 +107,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Summary
+      - name: Build summary
         if: success()
         run: |
           echo "✅ Build sukses! APK tersedia di Artifacts."
