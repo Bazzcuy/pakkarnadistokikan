@@ -4,6 +4,9 @@
 supabase/.env
 app/lib/secrets.dart
 
+# Claude Code internal
+.claude/settings.local.json
+
 # IDE / OS
 .DS_Store
 Thumbs.db
