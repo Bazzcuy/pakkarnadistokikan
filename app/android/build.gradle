@@ -1,19 +1,23 @@
+// Root project build file — minimal config untuk Flutter Android
+buildscript {
+    ext.kotlin_version = '1.9.22'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
     }
 }
 
-rootProject.buildFileName = 'app/build.gradle'
-subprojects {
-    project.buildFileName = 'app/build.gradle'
-}
-subprojects {
-    project.evaluationDependsOn(':app')
-}
-
-task clean(type: Delete) {
+tasks.register('clean', Delete) {
     delete rootProject.buildDir
 }
