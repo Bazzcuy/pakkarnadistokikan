@@ -71,8 +71,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         return;
       }
 
-      // Seed master data awal (kalau auto-confirm ON, langsung panggil)
-      await auth.seedMasterAwal();
+      // Seed master data TIDAK auto-dijalankan — biar user input sendiri.
+      // Jenis ikan, supplier, pelanggan ditambahkan lewat menu Master Data.
 
       if (mounted) context.go('/');
     } catch (e) {
