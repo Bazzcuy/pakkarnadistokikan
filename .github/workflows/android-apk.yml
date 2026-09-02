@@ -25,10 +25,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle (auto-generate wrapper if missing)
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-home-cache-cleanup: true
+      - name: Download gradle-wrapper.jar
+        run: |
+          curl -L -o app/android/gradle/wrapper/gradle-wrapper.jar \
+            https://github.com/gradle/gradle/raw/v8.5.0/gradle/wrapper/gradle-wrapper.jar
+          ls -la app/android/gradle/wrapper/gradle-wrapper.jar
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -57,11 +58,6 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: flutter pub get
-
-      - name: Generate gradle wrapper
-        working-directory: app/android
-        run: |
-          gradle wrapper --gradle-version 8.5 --distribution-type bin || true
 
       - name: Make gradlew executable
         working-directory: app/android
