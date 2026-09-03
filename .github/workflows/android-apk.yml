@@ -43,8 +43,7 @@ jobs:
         run: flutter --version
 
       - name: Cache pub dependencies
-        working-directory: app
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: |
             ~/.pub-cache
@@ -88,7 +87,7 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: catokan-debug
           path: app/build/app/outputs/flutter-apk/app-debug.apk
@@ -96,7 +95,7 @@ jobs:
           retention-days: 14
 
       - name: Upload release APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: catokan-release
           path: app/build/app/outputs/flutter-apk/app-release.apk
