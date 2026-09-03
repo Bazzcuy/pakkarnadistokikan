@@ -36,7 +36,6 @@ jobs:
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
-          cache: true
 
       - name: Show Flutter version
         working-directory: app
