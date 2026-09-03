@@ -38,4 +38,4 @@ _ARCHIVE_skripsi_2024/
 **/*.g.dart
 **/*.freezed.dart
 .docusaurus/
-.mf2/
+.mf2/node_modules/
