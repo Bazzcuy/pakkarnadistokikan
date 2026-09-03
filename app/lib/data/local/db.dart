@@ -4,12 +4,20 @@ import 'package:path/path.dart';
 /// Database lokal untuk offline-first.
 /// Schema HARUS mirror Postgres di `supabase/schema.sql`, dengan tambahan `synced_at` & `local_id`.
 class AppDatabase {
+  static AppDatabase? _instance;
   static Database? _db;
 
   static const _dbName = 'catokan_local.db';
   static const _dbVersion = 1;
 
-  static Future<Database> instance() async {
+  AppDatabase._();
+
+  static AppDatabase get instance {
+    _instance ??= AppDatabase._();
+    return _instance!;
+  }
+
+  Future<Database> getDatabase() async {
     if (_db != null) return _db!;
     final dir = await getDatabasesPath();
     final path = join(dir, _dbName);
@@ -26,7 +34,7 @@ class AppDatabase {
     return _db!;
   }
 
-  static Future<void> close() async {
+  Future<void> close() async {
     await _db?.close();
     _db = null;
   }

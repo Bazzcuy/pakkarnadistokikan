@@ -56,7 +56,7 @@ class _JualPageState extends ConsumerState<JualPage> {
 
   Future<void> _refreshStok() async {
     if (_usaId == null) return;
-    final db = await ref.read(appDbProvider).instance();
+    final db = await ref.read(appDbProvider).getDatabase();
     final rows = await db.rawQuery('''
       select ji.id as jenis_id, ji.nama as jenis_nama,
         ifnull(sum(sg.sisa_kg),0) as total_kg,
@@ -153,7 +153,7 @@ class _JualPageState extends ConsumerState<JualPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                initialValue: _pelangganId,
+                value: _pelangganId,
                 decoration: const InputDecoration(labelText: 'Pelanggan'),
                 items: _pelanggan.map((p) => DropdownMenuItem(value: p.id, child: Text(p.nama))).toList(),
                 onChanged: (v) => setState(() => _pelangganId = v),

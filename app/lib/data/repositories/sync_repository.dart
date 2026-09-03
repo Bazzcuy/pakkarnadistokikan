@@ -19,7 +19,7 @@ class SyncRepository {
   /// Returns jumlah row yang berhasil di-sync.
   Future<int> pushAll(String usaId) async {
     if (!_isOnline) return 0;
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     int total = 0;
 
     // Urutan: master dulu, lalu header transaksi, lalu detail.
@@ -80,7 +80,7 @@ class SyncRepository {
   /// Pull semua data dari Supabase untuk user ini.
   Future<int> pullAll(String usaId) async {
     if (!_isOnline) return 0;
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     int total = 0;
 
     final pullOrder = [

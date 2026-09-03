@@ -120,7 +120,7 @@ class _GilingPageState extends ConsumerState<GilingPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                initialValue: _jenisIkanId,
+                value: _jenisIkanId,
                 decoration: const InputDecoration(labelText: 'Jenis Ikan'),
                 items: _jenis.map((j) => DropdownMenuItem(value: j.id, child: Text(j.nama))).toList(),
                 onChanged: (v) => setState(() => _jenisIkanId = v),

@@ -125,7 +125,7 @@ class _BeliPageState extends ConsumerState<BeliPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                initialValue: _supplierId,
+                value: _supplierId,
                 decoration: const InputDecoration(labelText: 'Supplier'),
                 items: _suppliers
                     .map((s) => DropdownMenuItem(value: s.id, child: Text(s.nama)))
@@ -134,7 +134,7 @@ class _BeliPageState extends ConsumerState<BeliPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                initialValue: _jenisIkanId,
+                value: _jenisIkanId,
                 decoration: const InputDecoration(labelText: 'Jenis Ikan'),
                 items: _jenis
                     .map((j) => DropdownMenuItem(value: j.id, child: Text(j.nama)))

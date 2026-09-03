@@ -61,7 +61,7 @@ class _PelangganPageState extends ConsumerState<PelangganPage> {
                 TextField(controller: alamat, decoration: const InputDecoration(labelText: 'Alamat')),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  initialValue: tipeVal,
+                  value: tipeVal,
                   decoration: const InputDecoration(labelText: 'Tipe'),
                   items: const [
                     DropdownMenuItem(value: 'Retail', child: Text('Retail')),

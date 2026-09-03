@@ -30,7 +30,7 @@ class StokRepository {
     if (beratKg <= 0) throw ArgumentError('Berat harus lebih dari 0');
     if (hargaBeliPerkg <= 0) throw ArgumentError('Harga harus lebih dari 0');
 
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final id = _uuid.v4();
     final now = DateTime.now();
     final tanggal = now.toIso8601String().substring(0, 10);
@@ -145,7 +145,7 @@ class StokRepository {
       throw ArgumentError('Berat hasil tidak boleh melebihi berat mentah');
     }
 
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final id = _uuid.v4();
     final now = DateTime.now();
     final tanggal = now.toIso8601String().substring(0, 10);
@@ -253,7 +253,7 @@ class StokRepository {
   }) async {
     if (jumlahKg <= 0) throw ArgumentError('Jumlah kg harus lebih dari 0');
 
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final penjualanId = _uuid.v4();
     final now = DateTime.now();
     final tanggal = now.toIso8601String().substring(0, 10);
@@ -384,7 +384,7 @@ class StokRepository {
   }) async {
     if (nominal <= 0) throw ArgumentError('Nominal harus lebih dari 0');
 
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final now = DateTime.now();
     final tanggal = now.toIso8601String().substring(0, 10);
 
@@ -415,7 +415,7 @@ class StokRepository {
   }) async {
     if (nominal <= 0) throw ArgumentError('Nominal harus lebih dari 0');
 
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final now = DateTime.now();
     final tanggal = now.toIso8601String().substring(0, 10);
 
@@ -447,7 +447,7 @@ class StokRepository {
     if (alasan.trim().isEmpty) throw ArgumentError('Alasan koreksi wajib diisi');
     if (stokFisik < 0) throw ArgumentError('Stok fisik tidak boleh negatif');
 
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final now = DateTime.now();
     final koreksiId = _uuid.v4();
 
@@ -526,7 +526,7 @@ class StokRepository {
   // MASTER DATA — jenis_ikan, suppliers, pelanggan
   // ============================================================
   Future<List<JenisIkan>> listJenisIkan(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final rows = await db.query(
       'jenis_ikan',
       where: 'usa_id = ? and aktif = 1',
@@ -537,19 +537,19 @@ class StokRepository {
   }
 
   Future<List<Supplier>> listSuppliers(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final rows = await db.query('suppliers', where: 'usa_id = ?', whereArgs: [usaId], orderBy: 'nama asc');
     return rows.map(Supplier.fromMap).toList();
   }
 
   Future<List<Pelanggan>> listPelanggan(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final rows = await db.query('pelanggan', where: 'usa_id = ?', whereArgs: [usaId], orderBy: 'nama asc');
     return rows.map(Pelanggan.fromMap).toList();
   }
 
   Future<void> tambahJenisIkan(String usaId, String nama) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final now = DateTime.now();
     final id = _uuid.v4();
     await db.transaction((txn) async {
@@ -574,7 +574,7 @@ class StokRepository {
   }
 
   Future<void> tambahSupplier(String usaId, String nama, {String? noHp, String? alamat, String? catatan}) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     await db.insert('suppliers', {
       'id': _uuid.v4(),
       'usa_id': usaId,
@@ -588,7 +588,7 @@ class StokRepository {
   }
 
   Future<void> tambahPelanggan(String usaId, String nama, {String? noHp, String? alamat, String tipe = 'Retail'}) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     await db.insert('pelanggan', {
       'id': _uuid.v4(),
       'usa_id': usaId,
@@ -605,7 +605,7 @@ class StokRepository {
   // READ — untuk dashboard & laporan
   // ============================================================
   Future<double> totalStokMentah(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final r = await db.rawQuery(
       'select ifnull(sum(total_kg),0) as t from stok_mentah where usa_id = ?',
       [usaId],
@@ -614,7 +614,7 @@ class StokRepository {
   }
 
   Future<double> totalStokGiling(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final r = await db.rawQuery(
       "select ifnull(sum(sisa_kg),0) as t from stok_giling where usa_id = ? and status = 'TERSEDIA'",
       [usaId],
@@ -623,7 +623,7 @@ class StokRepository {
   }
 
   Future<double> totalPenjualanHariIni(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final r = await db.rawQuery(
       "select ifnull(sum(total),0) as t from penjualan where usa_id = ? and tanggal = ?",
@@ -634,7 +634,7 @@ class StokRepository {
 
   /// Sisa utang per supplier (positif = emak berhutang).
   Future<List<Map<String, Object?>>> sisaUtangSupplier(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     return await db.rawQuery('''
       select s.id, s.nama,
         coalesce((
@@ -658,7 +658,7 @@ class StokRepository {
 
   /// Sisa piutang per pelanggan (positif = pelanggan berhutang ke emak).
   Future<List<Map<String, Object?>>> sisaPiutangPelanggan(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     return await db.rawQuery('''
       select p.id, p.nama,
         coalesce(p.total, 0) - coalesce((
@@ -684,7 +684,7 @@ class StokRepository {
   }
 
   Future<List<Map<String, Object?>>> listPenjualanWithSisa(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     return await db.rawQuery('''
       select pj.id, pj.nomor_transaksi, pj.tanggal, p.nama as pelanggan_nama, pj.total,
         coalesce((select sum(b.nominal) from pembayaran_penjualan b where b.penjualan_id = pj.id), 0) as dibayar
@@ -697,7 +697,7 @@ class StokRepository {
   }
 
   Future<List<RiwayatStok>> listRiwayat(String usaId, {int limit = 100}) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     final rows = await db.query(
       'riwayat_stok',
       where: 'usa_id = ?',
@@ -710,7 +710,7 @@ class StokRepository {
 
   /// Untuk screen koreksi: list semua stok_mentah per jenis ikan.
   Future<List<Map<String, Object?>>> listStokMentahForKoreksi(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     return await db.rawQuery('''
       select sm.id, ji.nama, sm.total_kg
       from stok_mentah sm
@@ -721,7 +721,7 @@ class StokRepository {
   }
 
   Future<List<Map<String, Object?>>> listStokGilingForKoreksi(String usaId) async {
-    final db = await _db.instance();
+    final db = await _db.getDatabase();
     return await db.rawQuery('''
       select sg.id, ji.nama, sg.batch_no, sg.sisa_kg
       from stok_giling sg

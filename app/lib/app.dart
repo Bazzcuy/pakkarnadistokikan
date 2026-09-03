@@ -12,7 +12,7 @@ import 'router.dart';
 // =========================================================
 // Riverpod providers — dipakai global oleh semua UI
 // =========================================================
-final appDbProvider = Provider<AppDatabase>((ref) => AppDatabase());
+final appDbProvider = Provider<AppDatabase>((ref) => AppDatabase.instance);
 final authRepoProvider = Provider<AuthRepository>((ref) => AuthRepository(supabase));
 final stokRepoProvider = Provider<StokRepository>((ref) => StokRepository(ref.watch(appDbProvider)));
 final syncRepoProvider = Provider<SyncRepository>((ref) => SyncRepository(ref.watch(appDbProvider)));
