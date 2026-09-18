@@ -36,7 +36,7 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: cardColor,
         elevation: 1,
         margin: const EdgeInsets.symmetric(vertical: 6),
