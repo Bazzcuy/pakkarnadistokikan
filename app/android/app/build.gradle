@@ -51,3 +51,12 @@ android {
 flutter {
     source = "../.."
 }
+
+// Workaround: Flutter Gradle plugin di CI runner kadang gak otomatis nambahin
+// flutter_embedding_<mode> ke compile classpath (terlihat di job #14: Kotlin "Unresolved reference: io").
+// Tambahin manual sebagai compileOnly biar Java/Kotlin compile bisa resolve io.flutter.*.
+// Engine version 1.0.0-a18df97ca57a249df5d8d68cd0820600223ce262 cocok dengan Flutter 3.24.5 stable.
+dependencies {
+    compileOnly 'io.flutter:flutter_embedding_debug:1.0.0-a18df97ca57a249df5d8d68cd0820600223ce262'
+    compileOnly 'io.flutter:flutter_embedding_release:1.0.0-a18df97ca57a249df5d8d68cd0820600223ce262'
+}

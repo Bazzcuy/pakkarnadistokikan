@@ -82,27 +82,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          set -x
-          echo "=== FLUTTER_ROOT=${FLUTTER_ROOT} ==="
-          echo "=== local.properties ==="
-          cat android/local.properties
-          echo "=== GeneratedPluginRegistrant.java check ==="
-          find app/src -name GeneratedPluginRegistrant.java -exec head -20 {} \; 2>/dev/null || echo "no GeneratedPluginRegistrant yet"
-          echo "=== Trying flutter assemble with --verbose, no tail limit ==="
           flutter build apk --debug \
             --dart-define=SUPABASE_URL=${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co} \
-            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP} \
-            --verbose 2>&1 || true
-          echo "=== After-build: does FlutterActivity class show up in any jar? ==="
-          find app/build /home/runner/.gradle/caches -name '*.jar' 2>/dev/null | head -50
-          for j in $(find app/build -name '*.jar' 2>/dev/null); do
-            if unzip -l "$j" 2>/dev/null | grep -q 'io/flutter/embedding/android/FlutterActivity.class'; then
-              echo "FOUND in: $j"
-            fi
-          done
-          echo "=== Searching generated/main/ for any compiled FlutterActivity ==="
-          find app/build -name '*.class' 2>/dev/null | head -20
-          echo "=== END ==="
+            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}
 
       - name: Build release APK (unsigned)
         working-directory: app
