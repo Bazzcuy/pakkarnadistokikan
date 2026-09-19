@@ -56,7 +56,13 @@ jobs:
         working-directory: app/android
         run: |
           echo "flutter.sdk=${FLUTTER_ROOT}" > local.properties
+          echo "FLUTTER_ROOT=${FLUTTER_ROOT}"
           cat local.properties
+
+      - name: Verify flutter_tools/gradle exists
+        run: |
+          ls -la "${FLUTTER_ROOT}/packages/flutter_tools/gradle/" | head -20
+          ls -la "${FLUTTER_ROOT}/packages/flutter_tools/gradle/build.gradle.kts" 2>/dev/null || ls -la "${FLUTTER_ROOT}/packages/flutter_tools/gradle/build.gradle" 2>/dev/null || echo 'no build.gradle at flutter_tools/gradle'
 
       - name: Install dependencies
         working-directory: app
@@ -78,7 +84,8 @@ jobs:
         run: |
           flutter build apk --debug \
             --dart-define=SUPABASE_URL=${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co} \
-            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}
+            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP} \
+            --verbose 2>&1 | tail -300
 
       - name: Build release APK (unsigned)
         working-directory: app
