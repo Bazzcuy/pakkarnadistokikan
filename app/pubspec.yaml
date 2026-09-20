@@ -35,5 +35,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
 
+# app_links 6.4.x (Sep 2025+) pindah ke Kotlin DSL + AGP 9.x, gak kompatibel sama
+# Flutter 3.24.5 Gradle plugin di CI. supabase_flutter 2.5.6 narik transitif
+# '>=6.4.1' — override ke 6.3.3 (Des 2024, Groovy DSL, AGP 8.5.2) yang masih support.
+# 6.3.3 butuh Flutter >=3.19 & Dart >=3.3 → Flutter 3.24.5 (Dart 3.5) OK.
+dependency_overrides:
+  app_links: 6.3.3
+
 flutter:
   uses-material-design: true
