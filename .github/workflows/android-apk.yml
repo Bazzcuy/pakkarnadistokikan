@@ -95,20 +95,20 @@ jobs:
             -Pdart-defines="$DART_DEFINES" \
             2>&1 | tail -200
 
-      - name: Locate APK (Gradle puts it at standard outputs/apk/debug/ but Flutter wrapper expects flutter-apk/)
-        working-directory: app
+      - name: Locate APK (Gradle from app/android puts APK at android/build/outputs/apk/debug/)
+        working-directory: app/android
         run: |
           echo "===== APKs found ====="
-          find build -name '*.apk' -type f
-          mkdir -p build/app/outputs/flutter-apk
-          DEBUG_APK=$(find build -name 'app-debug.apk' -type f | head -1)
+          find . -name '*.apk' -type f
+          mkdir -p ../build/app/outputs/flutter-apk
+          DEBUG_APK=$(find . -name 'app-debug.apk' -type f | head -1)
           if [ -n "$DEBUG_APK" ]; then
-            cp "$DEBUG_APK" build/app/outputs/flutter-apk/app-debug.apk
-            echo "Copied debug APK to build/app/outputs/flutter-apk/app-debug.apk"
+            cp "$DEBUG_APK" ../build/app/outputs/flutter-apk/app-debug.apk
+            echo "Copied debug APK to ../build/app/outputs/flutter-apk/app-debug.apk"
           else
             echo "WARNING: no app-debug.apk found"
           fi
-          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || true
+          ls -la ../build/app/outputs/flutter-apk/ 2>/dev/null || true
 
       - name: Build release APK (unsigned) — same approach
         working-directory: app/android
@@ -128,12 +128,12 @@ jobs:
             2>&1 | tail -200 || echo "::warning::release build failed (continuing with debug)"
 
       - name: Locate release APK
-        working-directory: app
+        working-directory: app/android
         run: |
-          mkdir -p build/app/outputs/flutter-apk
-          RELEASE_APK=$(find build -name 'app-release.apk' -type f | head -1)
+          mkdir -p ../build/app/outputs/flutter-apk
+          RELEASE_APK=$(find . -name 'app-release.apk' -type f | head -1)
           if [ -n "$RELEASE_APK" ]; then
-            cp "$RELEASE_APK" build/app/outputs/flutter-apk/app-release.apk
+            cp "$RELEASE_APK" ../build/app/outputs/flutter-apk/app-release.apk
             echo "Copied release APK"
           else
             echo "WARNING: no app-release.apk found"
