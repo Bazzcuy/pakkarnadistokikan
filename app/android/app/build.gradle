@@ -18,7 +18,10 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 android {
     namespace = "com.bagas.catokan"
     compileSdk = 34
-    ndkVersion = flutter.ndkVersion
+    // Plugins (app_links, path_provider_android, shared_preferences_android,
+    // sqflite_android, url_launcher_android) require NDK 25.1.8937393.
+    // Default Flutter NDK (23.1.7779620) is too old → bump to highest required.
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
