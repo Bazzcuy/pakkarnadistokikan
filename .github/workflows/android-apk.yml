@@ -83,10 +83,16 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           set -o pipefail
+          # dart-defines must be base64(JSON({KEY: VALUE, ...})), NOT raw KEY=VALUE lines
+          DART_DEFINES=$(printf '{"SUPABASE_URL":"%s","SUPABASE_ANON_KEY":"%s"}' \
+            "${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co}" \
+            "${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}" \
+            | base64 -w0)
+          echo "dart-defines (b64): $DART_DEFINES"
           ./gradlew assembleDebug \
             -Pflutter.sdk=${FLUTTER_ROOT} \
             -Ptarget-platform=android-x64,android-arm64 \
-            -Pdart-defines=$(printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s' "${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co}" "${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}" | base64 -w0) \
+            -Pdart-defines="$DART_DEFINES" \
             2>&1 | tail -200
 
       - name: Locate APK (Gradle puts it at standard outputs/apk/debug/ but Flutter wrapper expects flutter-apk/)
@@ -111,10 +117,14 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           set -o pipefail
+          DART_DEFINES=$(printf '{"SUPABASE_URL":"%s","SUPABASE_ANON_KEY":"%s"}' \
+            "${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co}" \
+            "${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}" \
+            | base64 -w0)
           ./gradlew assembleRelease \
             -Pflutter.sdk=${FLUTTER_ROOT} \
             -Ptarget-platform=android-x64,android-arm64 \
-            -Pdart-defines=$(printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s' "${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co}" "${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}" | base64 -w0) \
+            -Pdart-defines="$DART_DEFINES" \
             2>&1 | tail -200 || echo "::warning::release build failed (continuing with debug)"
 
       - name: Locate release APK
