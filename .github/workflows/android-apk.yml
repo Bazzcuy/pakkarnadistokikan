@@ -82,9 +82,16 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          flutter build apk --debug \
+          set -o pipefail
+          flutter build apk --debug --verbose \
             --dart-define=SUPABASE_URL=${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co} \
-            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}
+            --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP} \
+            > /tmp/flutter_build.log 2>&1 || {
+              echo "===== flutter build apk FAILED — last 400 lines of verbose log ====="
+              tail -n 400 /tmp/flutter_build.log
+              echo "===== END ====="
+              exit 1
+            }
 
       - name: Build release APK (unsigned)
         working-directory: app
