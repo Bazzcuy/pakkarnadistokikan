@@ -1,5 +1,5 @@
 name: catokan
-description: "CATOKAN — Catat Stok Ikan Giling untuk Mama."
+description: "CATOKAN — aplikasi pencatatan stok ikan giling."
 publish_to: 'none'
 version: 0.1.0+1
 

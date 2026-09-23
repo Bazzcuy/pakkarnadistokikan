@@ -85,8 +85,8 @@ jobs:
           set -o pipefail
           # dart-defines must be base64(JSON({KEY: VALUE, ...})), NOT raw KEY=VALUE lines
           DART_DEFINES=$(printf '{"SUPABASE_URL":"%s","SUPABASE_ANON_KEY":"%s"}' \
-            "${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co}" \
-            "${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}" \
+            "${SUPABASE_URL:-https://jyabdncgxygacttsturu.supabase.co}" \
+            "${SUPABASE_ANON_KEY:-sb_publishable_8sXfhFCqQF1f3MO69JW5FQ_77iS7wk-}" \
             | base64 -w0)
           echo "dart-defines (b64): $DART_DEFINES"
           ./gradlew assembleDebug \
@@ -118,8 +118,8 @@ jobs:
         run: |
           set -o pipefail
           DART_DEFINES=$(printf '{"SUPABASE_URL":"%s","SUPABASE_ANON_KEY":"%s"}' \
-            "${SUPABASE_URL:-https://blassyztvmsvejinqdy.supabase.co}" \
-            "${SUPABASE_ANON_KEY:-sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP}" \
+            "${SUPABASE_URL:-https://jyabdncgxygacttsturu.supabase.co}" \
+            "${SUPABASE_ANON_KEY:-sb_publishable_8sXfhFCqQF1f3MO69JW5FQ_77iS7wk-}" \
             | base64 -w0)
           ./gradlew assembleRelease \
             -Pflutter.sdk=${FLUTTER_ROOT} \

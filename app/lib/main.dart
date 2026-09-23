@@ -10,11 +10,13 @@ import 'data/remote/supabase_client.dart';
 ///   flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co --dart-define=SUPABASE_ANON_KEY=eyJ...
 const String _supabaseUrl = String.fromEnvironment(
   'SUPABASE_URL',
-  defaultValue: 'https://blassyztvmsvejinqdy.supabase.co',
+  defaultValue: 'https://jyabdncgxygacttsturu.supabase.co',
 );
 const String _supabaseAnonKey = String.fromEnvironment(
   'SUPABASE_ANON_KEY',
-  defaultValue: 'sb_publishable_rJOxklU72bOVTbOnGFCSmg_9lZ99XSP',
+  // PENTING: ini publishable key (sb_publishable_...), BUKAN service_role JWT.
+  // service_role jangan pernah di-compile ke APK karena bypass RLS.
+  defaultValue: 'sb_publishable_8sXfhFCqQF1f3MO69JW5FQ_77iS7wk-',
 );
 
 Future<void> main() async {
