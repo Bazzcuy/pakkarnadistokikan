@@ -315,7 +315,10 @@ end $$;
 
 -- ============================================================
 -- Trigger: auto-create users_profile saat user baru daftar
--- Dipanggil dari app via RPC register_user
+-- SECURITY DEFINER jalan sebagai role 'postgres' (owner tabel),
+-- tapi RLS policy masih applied kecuali kita matikan row_security lokal.
+-- Tanpa 'set local row_security = off', insert ke public.usa ditolak
+-- policy "created_by = auth.uid()" karena auth.uid() null di trigger context.
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
@@ -323,6 +326,9 @@ declare
   new_usa_id uuid;
   new_numa text;
 begin
+  -- Bypass RLS untuk trigger ini (jalan sebagai table owner)
+  perform set_config('row_security', 'off', true);
+
   new_numa := coalesce(new.raw_user_meta_data->>'nama', split_part(new.email, '@', 1));
   -- Buat usaha baru untuk user pertama kali
   insert into public.usa (nama_usa, created_by)

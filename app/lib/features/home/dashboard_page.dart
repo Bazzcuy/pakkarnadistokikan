@@ -35,38 +35,59 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Future<void> _bootstrap() async {
-    final auth = ref.read(authRepoProvider);
-    final id = await auth.getUsaId();
-    if (!mounted) return;
-    setState(() => _usaId = id);
-    if (id != null) {
-      await _refresh();
-      // Sync otomatis saat buka dashboard
-      _syncAll();
-    } else {
-      setState(() => _loading = false);
+    try {
+      final auth = ref.read(authRepoProvider);
+      final id = await auth.getUsaId();
+      if (!mounted) return;
+      setState(() => _usaId = id);
+      if (id != null) {
+        await _refresh();
+        // Sync otomatis saat buka dashboard
+        _syncAll();
+      } else {
+        setState(() => _loading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _syncHint = 'Gagal memuat: $e';
+        });
+      }
     }
   }
 
   Future<void> _refresh() async {
-    if (_usaId == null) return;
-    final repo = ref.read(stokRepoProvider);
-    final results = await Future.wait([
-      repo.totalStokMentah(_usaId!),
-      repo.totalStokGiling(_usaId!),
-      repo.totalPenjualanHariIni(_usaId!),
-      repo.totalSisaUtangSupplier(_usaId!),
-      repo.totalSisaPiutangPelanggan(_usaId!),
-    ]);
-    if (!mounted) return;
-    setState(() {
-      _stokMentah = results[0];
-      _stokGiling = results[1];
-      _jualHariIni = results[2];
-      _utangSupplier = results[3];
-      _piutangPelanggan = results[4];
-      _loading = false;
-    });
+    if (_usaId == null) {
+      setState(() => _loading = false);
+      return;
+    }
+    try {
+      final repo = ref.read(stokRepoProvider);
+      final results = await Future.wait([
+        repo.totalStokMentah(_usaId!),
+        repo.totalStokGiling(_usaId!),
+        repo.totalPenjualanHariIni(_usaId!),
+        repo.totalSisaUtangSupplier(_usaId!),
+        repo.totalSisaPiutangPelanggan(_usaId!),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _stokMentah = results[0];
+        _stokGiling = results[1];
+        _jualHariIni = results[2];
+        _utangSupplier = results[3];
+        _piutangPelanggan = results[4];
+        _loading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _syncHint = 'Gagal ambil data: $e';
+        });
+      }
+    }
   }
 
   Future<void> _syncAll() async {

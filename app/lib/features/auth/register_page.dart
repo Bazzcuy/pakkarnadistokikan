@@ -28,7 +28,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   Future<void> _submit() async {
     if (_nama.text.trim().isEmpty) {
-      _toast('Isi nama Mama dulu');
+      _toast('Isi nama dulu');
       return;
     }
     if (!_email.text.contains('@')) {
@@ -43,40 +43,54 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     setState(() => _loading = true);
     try {
       final auth = ref.read(authRepoProvider);
-      await auth.register(
+      final res = await auth.register(
         email: _email.text.trim(),
         password: _password.text,
         nama: _nama.text.trim(),
       );
-      // Login otomatis setelah register di Supabase (jika auto-confirm aktif)
-      bool loggedIn = false;
-      try {
-        await auth.login(email: _email.text.trim(), password: _password.text);
-        loggedIn = true;
-      } catch (_) {
-        // Auto-confirm OFF — perlu cek email dulu
+
+      // signUp mungkin return session (kalau auto-confirm ON) atau belum (kalau OFF).
+      // Cek dulu — kalo sudah ada session, langsung masuk.
+      if (res.session != null) {
+        if (mounted) context.go('/');
+        return;
       }
 
-      if (!loggedIn) {
+      // Belum ada session → coba login manual (artinya auto-confirm aktif,
+      // signUp cuma create user tanpa session karena ada delay).
+      try {
+        await auth.login(email: _email.text.trim(), password: _password.text);
+        if (mounted) context.go('/');
+        return;
+      } catch (loginErr) {
+        // Login gagal setelah signup → biasanya karena email confirmation ON
+        // di Supabase Auth settings.
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cek email Mama untuk verifikasi, lalu login ulang.'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
+          await showDialog<void>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Akun terbuat, verifikasi dibutuhkan'),
+              content: const Text(
+                'Akun berhasil dibuat tapi Supabase masih minta verifikasi email.\n\n'
+                'Kalau lo gak mau pakai verifikasi, matikan di:\n'
+                'Supabase Dashboard → Authentication → Providers → Email → '
+                'matikan "Confirm email".\n\n'
+                'Sementara, cek email kamu lalu login manual.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
           );
           context.go('/login');
         }
         return;
       }
-
-      // Seed master data TIDAK auto-dijalankan — biar user input sendiri.
-      // Jenis ikan, supplier, pelanggan ditambahkan lewat menu Master Data.
-
-      if (mounted) context.go('/');
     } catch (e) {
-      _toast(_registerError(e));
+      if (mounted) _toast(_registerError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -92,6 +106,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
     if (s.contains('rate limit')) {
       return 'Terlalu banyak percobaan. Coba lagi nanti.';
+    }
+    if (s.contains('Email not confirmed')) {
+      return 'Email belum diverifikasi. Cek email kamu atau minta admin matikan verifikasi.';
     }
     return 'Gagal daftar: ${s.replaceAll('Exception: ', '')}';
   }
@@ -118,13 +135,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Sekali daftar, Mama langsung punya usaha sendiri dan Mama Bagas bisa lihat dari HP lain.',
+                'Sekali daftar, akun dan usaha baru otomatis dibuat dan siap dipakai.',
                 style: TextStyle(color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 24),
               TextField(
                 controller: _nama,
-                decoration: const InputDecoration(labelText: 'Nama Mama / Pengguna'),
+                decoration: const InputDecoration(labelText: 'Nama Pengguna'),
               ),
               const SizedBox(height: 12),
               TextField(

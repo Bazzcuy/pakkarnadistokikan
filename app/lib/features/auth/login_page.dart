@@ -62,7 +62,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   String _extractError(Object e) {
     final s = e.toString();
     if (s.contains('Invalid login')) return 'Email atau password salah';
-    if (s.contains('Email not confirmed')) return 'Cek email Mama untuk verifikasi dulu';
+    if (s.contains('Email not confirmed')) return 'Email belum diverifikasi. Hubungi admin untuk matikan verifikasi email.';
     if (s.contains('rate limit')) return 'Terlalu banyak percobaan. Coba lagi nanti.';
     return s.replaceAll('Exception: ', '');
   }
@@ -141,8 +141,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         if (_showHint) ...[
                           const SizedBox(height: 8),
                           const Text(
-                            'Tekan tombol "Daftar" di atas, lalu isi nama Mama dan password. '
-                            'Aplikasi akan otomatis membuat usaha baru dan menghubungkan Mama ke Mama Bagas.',
+                            'Tekan tombol "Daftar" di atas, lalu isi nama dan password. '
+                            'Aplikasi otomatis membuat usaha baru yang siap dipakai.',
                             style: TextStyle(fontSize: 13),
                           ),
                         ],
