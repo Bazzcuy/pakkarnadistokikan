@@ -110,6 +110,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (s.contains('Email not confirmed')) {
       return 'Email belum diverifikasi. Cek email kamu atau minta admin matikan verifikasi.';
     }
+    if (s.contains('email_provider_disabled') || s.contains('Email signups are disabled')) {
+      return 'Email provider dimatikan di Supabase. Buka Dashboard → Auth → Providers → Email → aktifkan.';
+    }
     return 'Gagal daftar: ${s.replaceAll('Exception: ', '')}';
   }
 
